@@ -1,4 +1,4 @@
-# F.I.S.R.T rules for clean tests
+# F.I.S.R.T. rules for clean tests
 ###Fast 
 Tests should be fast. They should run quickly. When tests run slow, you won’t want to run them frequently. If you don’t run them frequently, you won’t ﬁnd problems early enough to ﬁx them easily. You won’t feel as free to clean up the code. Eventually the code will begin to rot.
 ###Independent
