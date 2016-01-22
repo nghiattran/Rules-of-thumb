@@ -1,3 +1,9 @@
+Nouns for classes and variables.
+
+Verbs for functions and methods.
+
+report.appendFooter() is better than appendFooter(report).
+
 Pronounceable is better than abbreviated.
 
 The length of a name should correspond to the size of its scope.
