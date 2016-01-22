@@ -1,0 +1,1 @@
+#Programming rules of thumb
