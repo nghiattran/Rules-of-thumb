@@ -1,1 +1,1 @@
-#Programming rules of thumb
+# Some of my notes of thumb
