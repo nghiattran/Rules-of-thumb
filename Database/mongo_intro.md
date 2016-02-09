@@ -28,9 +28,27 @@
 ObjectIds use 12 bytes of storage, which gives them a string representation that is 24
 hexadecimal digits: 2 digits for each byte. 
 
-| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 |
-|---|---|---|---|---|---|---|---|---|---|----|----|
-|`Timestamp`|||`Machine`|||`PID`|||`Increment`|||
+<table style="text-align: center">
+  <tr>
+    <td>1</td>
+    <td>2</td>
+    <td>3</td>
+    <td>4</td>
+    <td>5</td>
+    <td>6</td>
+    <td>7</td>
+    <td>8</td>
+    <td>9</td>
+    <td>10</td>
+    <td>11</td>
+  </tr>
+  <tr>
+    <td colspan="4">Timestamp</td>
+    <td colspan="4">Machine</td>
+    <td colspan="2">PID</td>
+    <td colspan="2">Increment</td>
+  </tr>
+</table>
 
 # Array modifiers
 
