@@ -900,3 +900,407 @@ Get indexes in a collection:
 **Tips**: Use the background option when building an index. This will yield to other operations but still have severe impact. It is much slower.
 
 **TIPS**: If you have the choice, creating indexes on existing documents is slightly faster than creating the index first and then inserting all documents.
+
+# Chapter 6: Special Index and Collection Types
+
+### Capped Collections
+
+Unilike "normal" collections which grow dynamically, **capped colection** is created in advance and is fixed in size. 
+
+Capped collection: 
+
+1. Behaves like a circular queues.
+If we’re out of space, the oldest document will be deleted, and the new one will take its place.
+2. Moved, deleted, and updates that would cause documents to grow are not allowed.
+
+**Tips**: Capped collections cannot be sharded.
+
+##### Creating Capped Collections
+
+Capped Collections has `size` of 100000 bytes and `max` number of documents is 100.
+
+```
+    db.createCollection(
+        "my_collection", {
+            "capped" : true, 
+            "size" : 100000,
+            "max" : 100
+        });
+```
+
+**Caution**: Once a capped collection has been created, it cannot be changed.
+
+##### Sorting Au Naturel
+
+Sort oldest to newest.
+
+```
+    db.my_collection.find().sort({"$natural" : 1})
+```
+
+Sort newest to oldest.
+
+```
+    db.my_collection.find().sort({"$natural" : -1})
+```
+
+##### Tailable Cursors
+
+**Tailable cursors**: a special type of cursor that are not closed when their results are exhausted. 
+
+Tailable cursors:
+1. Can be used only on capped collections, since insert order is not tracked for normal collections.
+2. Will time out after 10 minutes of no results.
+3. *mongo* shell does not allow you to use tailable cursors.
+
+##### No-_id Collections
+
+**Trap**: Do not create a collection with `_id`.
+
+### Time-To-Live Indexes (TTL)
+
+**TTL** indexes allow you to set a timeout for each document.
+
+This type of index is useful for caching problems like session storage.
+
+This creates a TTL index on the "lastUpdated" field. If a document’s "lastUpdated" field exists and is a date, the document will be removed once the server time is expireAfterSecs seconds ahead of the document’s time.
+
+```
+    db.foo.ensureIndex({
+            "lastUpdated" : 1
+        }, 
+        {
+            "expireAfterSecs" : 60*60*24
+        })
+```
+
+### Full-Text Indexes
+
+Full-text indexes is used for indexing text in documents. They are particularly heavyweight.
+
+**Trap**: Use full-text indexes with caution because this type of index will slow down your application serverely.
+
+```
+    db.adminCommand({"setParameter" : 1, "textSearchEnabled" : true})
+```
+
+TODO: read this section again.
+
+### Geospatial Indexing
+
+TODO: read this section again.
+
+### Storing Files with GridFS
+
+**GridFS**:  a mechanism for storing large binary files in MongoDB.
+
+Upsides:
+
+*   Simplify your stack.
+*   Will leverage any existing replication or autosharding that you’ve set up.
+*   Alleviate some of the issues that certain filesystems can exhibit when
+being used to store user uploads.
+*   Great disk locality.
+
+Downsides:
+
+*   Slower performance.
+*   Can only modify documents by deleting them and resaving the whole thing.
+
+**Tips**: GridFS is generally best when you have large files you’ll be accessing in a sequential fashion that won’t be changing much.
+
+##### mongofiles
+
+Access GridFS with `mongofiles` cli.
+
+```sh
+    $ echo "Hello, world" > foo.txt                                       // Write a file name 'foo.txt'
+    $ mongofiles put foo.txt                                            // Write it to mongo
+    connected to: 127.0.0.1
+    added file: { _id: ObjectId('4c0d2a6c3052c25545139b88'),
+     filename: "foo.txt", length: 13, chunkSize: 262144,
+     uploadDate: new Date(1275931244818),
+     md5: "a7966bf58e23583c9a5a4059383ff850" }
+    done!
+    $ mongofiles list                                                   // List all files in mongo
+    connected to: 127.0.0.1
+    foo.txt 13
+    $ rm foo.txt
+    $ mongofiles get foo.txt                                            // Get file name in 'foo.txt' and write it to current directory
+    connected to: 127.0.0.1
+    done write to: foo.txt
+    $ cat foo.txt
+    Hello, world
+```
+
+##### Under the Hood
+
+* The basic idea behind GridFS is that we can store large files by splitting them up into chunks and storing each chunk as a separate document.
+* In addition to storing each chunk of a file, we store a single document that groups the chunks together and contains metadata about the file.
+* The chunks for GridFS are stored in their own collection.
+* By default chunks will use the collection fs.chunks.
+* By default, the metadata for each file is stored in fs.files collection.
+
+Structure of the individual documents in chunks collection:
+
+```
+    {
+        "_id" : ObjectId("..."),
+        "n" : 0,
+        "data" : BinData("..."),
+        "files_id" : ObjectId("...")
+    }
+```
+
+**files_id**: The "_id" of the file document that contains the metadata for this chunk.
+
+**n**: The chunk’s position in the file, relative to the other chunks.
+
+**data**: The bytes in this chunk of the file.
+
+Keys that are mandated by the GridFS specification:
+
+* **_id**: A unique id for the file—this is what will be stored in each chunk as the value for the "files_id" key.
+* **length**: The total number of bytes making up the content of the file.
+* **chunkSize**: The size of each chunk comprising the file, in bytes. The default is 256K, but this can be adjusted if needed.
+* **uploadDate**: A timestamp representing when this file was stored in GridFS.
+* **md5**: An md5 checksum of this file’s contents, generated on the server side.
+
+**Tips**: Users can check the value of the "md5" key to ensure that a file was uploaded correctly.
+
+# Chapter 7: Aggregation
+
+### The Aggregation Framework
+
+The **aggregation framework** lets you transform and combine documents in a collection. Basically, you build a pipeline that processes a stream of documents through several building blocks: filtering, projecting, grouping, sorting, limiting, and skipping.
+
+For example, if you had a collection of magazine collection, you might want find out who your most prolific authors were. You could create a pipeline with several steps:
+
+1. Project the authors out of each article document.
+2. Group the authors by name, counting the number of occurrences.
+3. Sort the authors by the occurrence count, descending.
+4. Limit results to the first five.
+
+Detail:
+
+1. {"$project" : {"author" : 1}}
+
+    This selects only `author` field in documents.
+
+    **Result**: ` {"_id" : id, "author" : "authorName"}`
+
+2. {"$group" : {"_id" : "$author", "count" : {"$sum" : 1}}}
+
+    This groups the authors by name and increments "count" for each document an author appears in.
+
+    - `"_id" : "$author"`
+
+        Specify the field we want to group by.
+
+    - `"count" : {"$sum" : 1}`
+
+        Increment article count by 1.
+
+    **Result**: ` {"_id" : "authorName", "count" : articleCount}.`
+
+3. {"$sort" : {"count" : -1}}
+
+    This reorders the result documents in descending order.
+
+4. {"$limit" : 5}
+
+    This limits the result set to the first five result documents.
+
+**Caution**: Aggregation results are limited to 16 MB of data
+
+### Pipeline Operations
+
+##### $match
+
+`$match` filters documents so that you can run an aggregation on a subset of documents.
+
+* Can be used with usual query operators ("$gt", "$lt", "$in", etc).
+* Cannot be used with geospatial operators.
+
+```
+    db.collection.aggregate(
+        {
+            $match : {
+                "state" : "OR"
+            }
+        })
+```
+
+**Tips**: Good practice is to put "$match" expressions as early as possible in the pipeline. It lightens workload by filtering unecessary documents.
+
+##### $project
+
+"$project" allows you to extract fields from subdocuments, rename fields, and perform interesting operations on them.
+
+```
+    db.collection.aggregate(
+        {
+            "$project" : {
+                "author" : 1, "_id" : 0
+            }
+        })
+```
+
+You can also rename the projected field. For example, you want to return the "_id" of each user as  "userId".
+
+```
+    db.collection.aggregate(
+        {
+            "$project" : {
+                "userId" : "$_id", 
+                "_id" : 0
+            }
+        })
+```
+
+The `$fieldname` syntax is used to refer to fieldname’s value in the aggregation framework.
+
+###### Pipeline expressions
+
+**Mathematical expressions**: let you manipulate numeric values.
+
+```
+    db.collection.aggregate(
+        {
+            "$project" : {
+                "totalPay" : {
+                    "$add" : ["$salary", "$bonus"]
+                }
+            }
+        })
+```
+
+Expression syntax:
+
+* `$add` : [expr1[, expr2, ..., exprN]]
+
+    Takes one or more expressions and adds them together.
+* `subtract` : [expr1, expr2]
+
+    Takes two expressions and subtracts the second from the first.
+* `$multiply` : [expr1[, expr2, ..., exprN]]
+
+    Takes one or more expressions and multiplies them together.
+* `$divide` : [expr1, expr2]
+
+    Takes two expressions and divides the first by the second.
+* `$mod` : [expr1, expr2]
+
+    Takes two expressions and returns the remainder of dividing the first by the second.
+
+**Date expressions**
+
+"$year", "$month", "$week", "$dayOfMonth", "$dayOfWeek", "$dayOfYear", "$hour", "$minute", and "$second".
+
+**String expressions**
+
+Basic string operations:
+
+* `$substr` : [expr, startOffset, numToReturn]
+
+    This returns a substring of the first argument, starting at the startOffset-th byte and including the next numToReturn bytes (note that this is measured in bytes, not characters, so multibytes encodings will have to be careful of this). expr must evaluate to a string.
+
+* `$concat` : [expr1[, expr2, ..., exprN]]
+
+    Concatenates each string expression (or string) given.
+
+* `$toLower`: expr
+
+    Returns the string in lower case. expr must evaluate to a string.
+
+
+* `$toUpper`: expr
+
+    Returns the string in upper case. expr must evaluate to a string.
+
+Example that generates email addresses of the format j.doe@example.com:
+
+```
+    db.collection.aggregate(
+        {
+            "$project" : {
+                "email" : {
+                    "$concat" : [
+                        {
+                            "$substr" : ["$firstName", 0, 1]
+                        },
+                        ".",
+                        "$lastName",
+                        "@example.com"
+                        ]
+                    }
+            }
+        })
+```
+
+**Logical expressions**
+
+There are several comparison expressions:
+
+* `$cmp` : [expr1, expr2]
+
+    Compare expr1 and expr2. Return 0 if the two expressions are equal, a negative number if expr1 is less than expr2, and a positive number if expr2 is less than expr1.
+
+* `$strcasecmp` : [string1, string2]
+
+    Case insensitive comparison between string1 and string2. Only works for Roman characters.
+
+* `$eq`/`$ne`/`$gt`/`$gte`/`$lt`/`$lte` : [expr1, expr2]
+
+    Perform the comparison on expr1 and expr2, returning whether it evaluates to true or false.
+
+There are a few boolean expressions:
+
+* `$and` : [expr1[, expr2, ..., exprN]]
+
+    Returns true if all expressions are true.
+
+* `$or` : [expr1[, expr2, ..., exprN]]
+
+    Returns true if at least one expression is true.
+
+* `$not` : expr
+
+    Returns the boolean opposite of expr.
+
+Finally, there are two control statements:
+
+* `$cond` : [booleanExpr, trueExpr, falseExpr]
+
+    If booleanExpr evaluates to true, trueExpr is returned; otherwise falseExpr is returned.
+
+* `$ifNull` : [expr, replacementExpr]
+
+    If expr is null this returns replacementExpr; otherwise it returns expr.
+
+**Tips**: Pipelines are particular about getting properly formed input, so these operators can be invaluable in filling in default values. If your data set is inconsistent, you can use this conditionals to detect missing values and populate them.
+
+**A projection example** 
+
+Suppose a professor wanted to generate grades using a somewhat complex calculation: the students are graded 10% on attendance, 30% on quizzes, and 60% on tests (unless the student is a teacher’s pet, in which case the grade is set to 100).
+
+```
+    db.collection.aggregate(
+{
+    "$project" : {
+        "grade" : {
+            "$cond" : [                                                     // conditional operator
+                "$teachersPet",
+                100,                                                        // if
+                {                                                           // else
+                    "$add" : [
+                        {"$multiply" : [.1, "$attendanceAvg"]},
+                        {"$multiply" : [.3, "$quizzAvg"]},
+                        {"$multiply" : [.6, "$testAvg"]}
+                    ]
+                }
+            ]
+        }
+    }
+})
+```
