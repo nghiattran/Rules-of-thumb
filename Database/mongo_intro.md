@@ -28,7 +28,7 @@
 ObjectIds use 12 bytes of storage, which gives them a string representation that is 24
 hexadecimal digits: 2 digits for each byte. 
 
-<table style="text-align: center">
+<table>
   <tr>
     <td>1</td>
     <td>2</td>
@@ -41,8 +41,9 @@ hexadecimal digits: 2 digits for each byte.
     <td>9</td>
     <td>10</td>
     <td>11</td>
+    <td>12</td>
   </tr>
-  <tr>
+  <tr style="text-align: center">
     <td colspan="4">Timestamp</td>
     <td colspan="4">Machine</td>
     <td colspan="2">PID</td>
