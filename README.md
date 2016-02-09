@@ -1,1 +1,1 @@
-# Some of my notes of thumb
+# Some of my notes
