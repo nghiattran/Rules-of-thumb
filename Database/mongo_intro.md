@@ -546,3 +546,338 @@ for updating objects once. Snapshotting makes queries slower.
 
 Inconsistencies arise only when the collection changes under a cursor while 
 it is waiting to get another batch of results.
+
+# Chap 5: Indexing
+
+## Introduction
+
+Index dramatically reduces query time by minimizing scanned objects. Indexing comes with a price. It will slows down INSERT, UPDATE, DELETE operations because mongo needs to update index afterward. Should only use a couple of indexes in a collection althought mongoDB support up to 64.
+
+### Create an index
+
+```
+	db.users.ensureIndex({"username" : 1})
+```
+
+### Create compound indexes
+
+```
+	db.users.ensureIndex({"age" : 1, "username" : 1})
+```
+
+What it does is that it will sort the collection based on `age` first and then `username`.
+
+Example without indexes
+
+```
+	{
+		{ "username" : "user0", "age" : 69 },
+		{ "username" : "user1", "age" : 50 },
+		{ "username" : "user2", "age" : 88 },
+		{ "username" : "user3", "age" : 52 },
+		{ "username" : "user4", "age" : 74 },
+		{ "username" : "user5", "age" : 104 },
+		{ "username" : "user6", "age" : 59 },
+		{ "username" : "user7", "age" : 102 },
+		{ "username" : "user8", "age" : 94 },
+		{ "username" : "user9", "age" : 7 },
+		{ "username" : "user10", "age" : 80 }
+	}
+```
+
+With compound index `{"age" : 1, "username" : 1}`
+
+```
+	[0, "user100309"] -> 0x0c965148
+	[0, "user100334"] -> 0xf51f818e
+	[0, "user100479"] -> 0x00fd7934
+	...
+	[0, "user99985" ] -> 0xd246648f
+	[1, "user100156"] -> 0xf78d5bdd
+	[1, "user100187"] -> 0x68ab28bd
+	[1, "user100192"] -> 0x5c7fb621
+	...
+	[1, "user999920"] -> 0x67ded4b7
+	[2, "user100141"] -> 0x3996dd46
+	[2, "user100149"] -> 0xfce68412
+	[2, "user100223"] -> 0x91106e23
+```
+
+Sorted by `age` and then `username` and each has a pointer to memory location.
+
+### Three most common ways to query with index
+
+##### Point query
+
+Very efficient because it can jump directly to the correct age and return already sorted list.
+
+```
+	db.users.find(
+		{
+			"age" : 21
+		}
+	).sort(
+		{
+			"username" : -1
+		}
+	)
+```
+
+##### Multi-value query
+
+Still efficient.
+
+```
+	db.users.find({
+		"age" : {
+			"$gte" : 21, "$lte" : 30
+		}
+	})
+```
+
+##### Multi-value query with sort
+
+Less efficient than the previous one because returning result is not in sorted order. `sort()` depends on how big the result is.
+
+```
+	db.users.find({
+		"age" : {
+			"$gte" : 21,
+			"$lte" : 30
+		}
+	}).sort({
+		"username" :1
+	})
+```
+
+##### Index in reverse order
+
+```
+	{"username" : 1, "age" : 1}
+```
+
+### Compound Indexes
+
+This matters if you oftern apply sorting on mutiple keys.
+For example index:
+
+```
+	{"age" : 1, "username" : 1}
+```
+
+These sorts are good
+
+```
+	{"age" : 1, "username" : 1}
+	{"age" : 1, "username" : -1}
+	{"age" : -1, "username" : -1}
+	{"age" : -1, "username" : 1}
+```
+
+But these will take longer
+
+```
+	{"username" : 1, "age" : 1}
+	{"username" : 1, "age" : -1}
+	{"username" : -1, "age" : -1}
+	{"username" : -1, "age" : 1}
+```
+
+### Covered Indexes
+When an index contains all the values requested by the user, it is considered to be covering a query. This type of query is faster because it does not need to follow the pointer to fetch the whole document.
+
+### How $-Operators Use Indexes
+
+##### Inefficient operators
+
+`$where`, `$exists`, `$ne`
+
+##### Ranges
+
+When designing an index with multiple fields, put fields that will be used in exact matches first (e.g., "x" : "foo" ) and ranges last (e.g., "y": {"$gt" : 3, "$lt" : 5} ). This allows the query to find an exact value for the first index key and then search within that for a second index range. Using this way, the query can save time by eliminating documents that to be search for range later.
+
+Example query:
+
+```
+	{
+		"age" : 47, 
+        "username" : {
+            "$gt" : "user5", 
+            "$lt" : "user8"
+        }
+    }
+```
+
+With index `{"age" : 1, "username" : 1}`, it will return users with `age` 47 very quickly and then do search on those returned documents. It is efficient.
+
+With index `{"username" : 1, "age" : 1}`, it searches for `username` between "user5" and "user8" and then pick out the ones with `age` 47. This forces DB to scan more items and searching for range takes more time than searching for exact value so this approach for inefficient.
+
+##### OR queries
+
+As of this writing, MongoDB can only use one index per query. That is, if you create one index on {"x" : 1} and another index on {"y" : 1} and then do a query on {"x" : 123, "y" : 456} , MongoDB will use one of the indexes you created, not use both. This only exception to this rule is "$or" . "$or" can use one index per $or clause, as $or preforms two queries and then merges the results.
+
+But in general, doing 2 seperate queries is much less efficient than doing one because MongoDB has to loop through the results and remove duplicates. So, prefer `$in` to `$or` whenever possible.
+
+##### Indexing Objects and Arrays
+
+Not sure why you want to do this. Not recommended.
+
+##### Index Cardinality
+
+**Cardinality** refers to how many distinct values there are for a field in a collection. 
+
+As a rule of thumb, try to create indexes on high-cardinality keys or at least put high-cardinality keys first in compound indexes (before low-cardinality keys).
+
+### explain() and hint()
+
+`explain()` is a function that describes how the query works. `explain()` must be called last. Two type of explains:
+
+1. For non-indexed queries
+2. For indexed queries
+
+##### Indexed queries
+
+Returned keys:
+
+* **cursor**: Indicate index in query.
+* **isMultiKey**: If this query used a multikey index.
+* **n**: The number of documents returned by the query.
+* **nscannedObjects**: The number of times MongoDB had to follow an index pointer to the actual document on disk
+* **nscanned**: The number of documents examined.
+* **scanAndOrder**: If MongoDB had to sort results in memory.
+* **indexOnly**: If MongoDB was able to fulfill this query using only the index entries.
+* **nYields**: The number of times this query yielded (paused) to allow a write request to proceed.
+* **millis**: Time to execute the query.
+* **indexBounds**: Describes how the index was used.
+
+Call `hint()` to force index. If not, MongoDB will automatically choose an index.
+
+##### The Query Optimizer
+
+MongoDB also provides the query optimizer which will choose a subset of possible indexes, run your query with those indexes in parallel. The first plan returns 100 results is the "winner" and MongoDB will cache that index for this query. That index will be reevaluated after a index is created or after every 1000 queries.
+
+##### When Not to Index
+
+Indexes become less and less efficient as you need to get larger percentages of a collection because using an index requires two lookups:
+
+1. Look at the index entry.
+2. Following the index’s pointer to the document.
+
+A table scan only requires one: 
+
+1. Looking at the document.
+
+
+**Caution**: if a query is returning 30% or more of the collection, start looking at whether indexes or table scans are faster. However, this number can vary from 2% to 60%.
+
+You can force it to do a table scan by hinting {"$natural" : 1}
+
+```
+    db.entries.find({"created_at" : {"$lt" : hourAgo}}).hint({"$natural" : 1})
+```
+
+### Types of Indexes
+
+##### Unique Indexes
+
+Enforce uniqueness.
+
+```
+    db.users.ensureIndex({"username" : 1}, {"unique" : true})
+```
+
+**Caution**: 
+
+1. If a key does not exist, the index stores its value as null for that document. This means that if you create a unique index and try to insert more than one document that is missing the indexed field, the inserts will fail because you already have a document with a value of null.
+
+2. All fields must be smaller than 1024 bytes to be included in an index. This means that keys longer than 8 KB will not be subject to the unique index constraints: you can insert identical 8 KB strings, for example.
+
+##### Compound unique indexes
+
+You can do that. For example, we have unique index on `{"username" : 1, "age" : 1}`, so the following is legal but a second copy of any of these documents would cause a duplicate key exception.
+
+```
+    db.users.insert({"username" : "bob"})
+    db.users.insert({"username" : "bob", "age" : 23})
+    db.users.insert({"username" : "fred", "age" : 23})
+```
+
+##### Dropping duplicates
+
+If you apply unique index on existing collection, you might key a duplicate key exception. You and force this operation by adding `dropDups` which will only keep one of the duplicate items and remove the rest. 
+
+```
+    db.people.ensureIndex({"username" : 1}, {"unique" : true, "dropDups" : true})
+```
+
+**Caution**: You have no control over which to keep and which to remove so do not use it with important data.
+
+### Sparse Indexes
+
+**Def**
+
+MongoDB **sparse indexes**: indexes that need not include every document as an entry.
+
+Apply unique key name `email` but do not require it.
+
+```
+    db.ensureIndex({"email" : 1}, {"unique" : true, "sparse" : true})
+```
+
+Sparse indexes do not necessarily have to be unique.
+
+**Caution**: The same query can return different results depending on whether or not it uses the sparse index.
+
+Example collection:
+
+```
+    {"_id" : 0 }
+    {"_id" : 1, "x" : 1 }
+    {"_id" : 2, "x" : 2 }
+    {"_id" : 3, "x" : 3 }
+```
+
+We use query
+
+```
+    db.foo.find({"x" : {"$ne" : 2}})
+```
+
+1. With no index:
+
+```
+    {"_id" : 0 }
+    {"_id" : 1, "x" : 1 }
+    {"_id" : 3, "x" : 3 }
+```
+
+2. With index db.ensureIndex({"x" : 1}, {"sparse" : true})
+
+```
+    {"_id" : 1, "x" : 1 }
+    {"_id" : 3, "x" : 3 }
+```
+
+Because `{"_id" : 0 }` does not have key `x` so it is not included in the index.
+
+### Index Administration
+
+* All indexes are stored in *system.indexes* collection.
+* *system.indexes* is reserved so you cannot modify or remove items directly
+* Modify or remove indexes by calling `ensureIndex` or `dropIndexes`.
+
+Get indexes in a collection:
+
+```
+    db.collectionName.getIndexes()
+```
+
+**Caution**: The "v" field is used internally for index versioning. If you have any indexes that do not have a "v" : 1 field, they are being stored in an older, less efficient format. You can upgrade them by ensuring that you’re running at least MongoDB version 2.0 and dropping and rebuilding the index.
+
+##### Identifying Indexes
+
+**Caution**: By default, when MongoDB build an index, it blocks all reads and writes on a database until the index build has finished.
+
+**Tips**: Use the background option when building an index. This will yield to other operations but still have severe impact. It is much slower.
+
+**TIPS**: If you have the choice, creating indexes on existing documents is slightly faster than creating the index first and then inserting all documents.
