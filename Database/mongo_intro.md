@@ -1556,7 +1556,7 @@ We want our results to be a list of the latest time and price for each day:
 
     The first time the reduce function is called for a given group, it will be passed the initialization document. This same accumulator will be used for each member of a given group, so any changes made to it can be persisted.
 
-* `"$reduce" : function(doc, prev) { }`
+* `"$reduce" : function(doc, prev) { ... }`
 
     This will be called once for each document in the collection. It is passed the current document and an accumulator document: the result so far for that group. In this example, we want the reduce function to compare the current document’s time with the accumulator’s time. If the current document has a later time, we’ll set the accumulator’s day and price to be the current document’s values. Remember that there is a separate accumulator for each group, so there is no need to worry about different days using the same accumulator.
 
