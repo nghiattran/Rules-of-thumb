@@ -1445,3 +1445,119 @@ Running `db.blog.aggregate({"$unwind" : "$comments"})` will return:
 Notice that the original document has been splitted into two documents with the same `_id`, `author`, and `post`.
 
 **Tips**: This is particularly useful if you want to return certain subdocuments from a query: `$unwind` the subdocuments and then `$match` the ones you want.
+
+**Tips**: Attempt to filter out as many documents (and as many fields from the documents) as possible at the beginning of your pipeline before hitting any `$project`, `$group`, or `$unwind` operations. This will reduce the workload for aggregation.
+
+### MapReduce
+
+MapReduce:
+
++ Can solve some problems that are too complex to express using the aggregation framework’s query language.
+
++ Can be easily parallelized across multiple servers
+
+    It splits up a problem, sends chunks of it to different machines, and lets each machine solve its part of the problem. When all the machines are finished, they merge all the pieces of the solution back into a full solution.
+
+- Tends to be fairly slow and should not be used for real-time data analysis.
+
+MapReduce steps:
+
+1. **map**
+
+    It maps an operation onto every document in a collection.
+
+2. **shuffle**
+
+    Keys are grouped and lists of emitted values are created for each key.
+
+3. **reduce**
+
+    Takes this list of values and reduces it to a single element.
+
+4. **result**
+
+    The element from step 3 is returned to the shuffle step until each key has a list containing a single value.
+
+##### MongoDB and MapReduce
+
+TODO: read this section again.
+
+### Aggregation Commands
+
+##### count
+
+```
+    db.foo.count({"x" : 1})
+
+```
+
+##### distinct
+
+```
+    db.runCommand({"distinct" : "people", "key" : "age"})
+
+```
+
+Returns
+
+```
+    {  
+        "values" : [20, 35, 60],
+        "ok" : 1
+    }
+```
+
+##### group
+
+You choose a key to group by, and MongoDB divides the collection into separate groups for each value of the chosen key. 
+
+**Tips**: If you are familiar with SQL, group is similar to SQL’s GROUP BY.
+
+Example data:
+
+```
+    {"day" : "2010/10/03", "time" : "10/3/2010 03:57:01 GMT-400", "price" : 4.23}
+    {"day" : "2010/10/04", "time" : "10/4/2010 11:28:39 GMT-400", "price" : 4.27}
+    {"day" : "2010/10/03", "time" : "10/3/2010 05:00:23 GMT-400", "price" : 4.10}
+    {"day" : "2010/10/06", "time" : "10/6/2010 05:27:58 GMT-400", "price" : 4.30}
+    {"day" : "2010/10/04", "time" : "10/4/2010 08:34:50 GMT-400", "price" : 4.01}
+```
+
+We want our results to be a list of the latest time and price for each day:
+
+```
+    db.runCommand(
+        {
+            "group" : {
+                "ns" : "stocks",
+                "key" : "day",
+                "initial" : {
+                    "time" : 0
+                },
+                "$reduce" : function(doc, prev) {
+                    if (doc.time > prev.time) {
+                        prev.price = doc.price;
+                        prev.time = doc.time;
+                    }
+                }
+            }
+        })
+```
+
+* `"ns" : "stocks"`
+
+    This determines which collection we’ll be running the group on.
+
+* `"key" : "day"`
+
+    This specifies the key on which to group the documents in the collection. In this case, all the documents with a "day" key of a given value will be grouped together.
+
+* `"initial" : {"time" : 0}`
+
+    The first time the reduce function is called for a given group, it will be passed the initialization document. This same accumulator will be used for each member of a given group, so any changes made to it can be persisted.
+
+* `"$reduce" : function(doc, prev) { ... }`
+
+    This will be called once for each document in the collection. It is passed the current document and an accumulator document: the result so far for that group. In this example, we want the reduce function to compare the current document’s time with the accumulator’s time. If the current document has a later time, we’ll set the accumulator’s day and price to be the current document’s values. Remember that there is a separate accumulator for each group, so there is no need to worry about different days using the same accumulator.
+
+**Note**: Some documentation refers to a "cond" or "q" key, both of which are identical to the "condition" key (just less descriptive).
