@@ -1286,21 +1286,162 @@ Suppose a professor wanted to generate grades using a somewhat complex calculati
 
 ```
     db.collection.aggregate(
-{
-    "$project" : {
-        "grade" : {
-            "$cond" : [                                                     // conditional operator
-                "$teachersPet",
-                100,                                                        // if
-                {                                                           // else
-                    "$add" : [
-                        {"$multiply" : [.1, "$attendanceAvg"]},
-                        {"$multiply" : [.3, "$quizzAvg"]},
-                        {"$multiply" : [.6, "$testAvg"]}
-                    ]
-                }
-            ]
+    {
+        "$project" : {
+            "grade" : {
+                "$cond" : [                                                     // conditional operator
+                    "$teachersPet",
+                    100,                                                        // if
+                    {                                                           // else
+                        "$add" : [
+                            {"$multiply" : [.1, "$attendanceAvg"]},
+                            {"$multiply" : [.3, "$quizzAvg"]},
+                            {"$multiply" : [.6, "$testAvg"]}
+                        ]
+                    }
+                ]
+            }
         }
-    }
-})
+    })
 ```
+
+##### $group
+
+Grouping allows you to group documents based on certain fields and combine their values. 
+
+Example:
+
+If we had a collection of students and we wanted to organize student into groups based on grade, we could group by their "grade" field.
+
+```
+    db.collection.aggregate(
+    {
+        "$group" : {
+            "_id" : "$day"
+        }
+    })
+```
+
+This will return
+
+```
+ {
+    "result" : [
+        {"_id" : "A+"}, 
+        {"_id" : "A"}, 
+        {"_id" : "A-"}, 
+        ..., 
+        {"_id" : "F"}
+    ],
+    "ok" : 1
+}
+```
+
+**Grouping operators**
+
+* **$sum** : value
+* **$avg** : value
+
+```
+    db.sales.aggregate(
+    {
+        "$group" : {
+            "_id" : "$country",
+            "totalRevenue" : {
+                "$average" : "$revenue"
+            },
+            "numSales" : {
+                "$sum" : 1
+            }
+        }
+    })
+```
+
+* **$max** : expr
+
+    Returns the greatest value of any of the inputs.
+
+* **$min** : expr
+
+    Returns the smallest value of any of the inputs.
+
+* **$first** : expr
+
+    This returns the first value seen by group, ignoring subsequent values. This is only sensible to use when you know the order that the data is being processed in: that is, after a sort.
+
+* **$last** : expr
+
+    This is the opposite of the previous; it returns the last value seen by the group.
+
+* **$addToSet** : expr
+
+    Keeps an array of values seen so far and, if expr is not present in the array, adds it. Each value appears at most once in the resulting array and ordering is not guaranteed.
+
+* **$push** : expr
+
+    Indiscriminately adds each value seen to the array. Returns an array of all values.
+
+
+**Note**:  with sharding, **$group** will first be run on each shard and then the individual shards’ groups will be sent to the
+mongos to do the final grouping and the remainder of the pipeline will be run on the mongos (not the shards).
+
+##### $unwind
+
+`$unwind` turns each field of an array into a separate document.
+
+Example, we have a document like this:
+
+```
+    {
+        "_id" : ObjectId("50eeffc4c82a5271290530be"),
+        "author" : "k",
+        "post" : "Hello, world!",
+        "comments" : [
+            {
+                "author" : "mark",
+                "date" : ISODate("2013-01-10T17:52:04.148Z"),
+                "text" : "Nice post"
+            },
+            {
+                "author" : "bill",
+                "date" : ISODate("2013-01-10T17:52:04.148Z"),
+                "text" : "I agree"
+            }
+        ]
+    }
+```
+
+Running `db.blog.aggregate({"$unwind" : "$comments"})` will return:
+
+```
+    {
+        "results" :[
+            {
+                "_id" : ObjectId("50eeffc4c82a5271290530be"),
+                "author" : "k",
+                "post" : "Hello, world!",
+                "comments" : {
+                    "author" : "mark",
+                    "date" : ISODate("2013-01-10T17:52:04.148Z"),
+                    "text" : "Nice post"
+                }
+            },
+            {
+                "_id" : ObjectId("50eeffc4c82a5271290530be"),
+                "author" : "k",
+                "post" : "Hello, world!",
+                "comments" : {
+                    "author" : "bill",
+                    "date" : ISODate("2013-01-10T17:52:04.148Z"),
+                    "text" : "I agree"
+                }
+            }
+        ],
+        "ok" : 1
+    }
+
+```
+
+Notice that the original document has been splitted into two documents with the same `_id`, `author`, and `post`.
+
+**Tips**: This is particularly useful if you want to return certain subdocuments from a query: `$unwind` the subdocuments and then `$match` the ones you want.
