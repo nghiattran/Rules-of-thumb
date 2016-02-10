@@ -1561,3 +1561,178 @@ We want our results to be a list of the latest time and price for each day:
     This will be called once for each document in the collection. It is passed the current document and an accumulator document: the result so far for that group. In this example, we want the reduce function to compare the current document’s time with the accumulator’s time. If the current document has a later time, we’ll set the accumulator’s day and price to be the current document’s values. Remember that there is a separate accumulator for each group, so there is no need to worry about different days using the same accumulator.
 
 **Note**: Some documentation refers to a "cond" or "q" key, both of which are identical to the "condition" key (just less descriptive).
+
+##### Using a finalizer
+
+Finalizers can be used to minimize the amount of data that needs to be transferred from the database to the user, which is important because the `group` command’s output needs to fit in a single database response.
+
+Example, we want to find the most popular tag for each day. We group by day (again) and keep a count for each tag
+
+```
+db.posts.group(
+	{
+		"key" : {"day" : true},
+		"initial" : {
+			"tags" : {}
+		},
+		"$reduce" : function(doc, prev) {
+			for (i in doc.tags) {
+				if (doc.tags[i] in prev.tags) {
+					prev.tags[doc.tags[i]]++;
+				} else {
+					prev.tags[doc.tags[i]] = 1;
+				}
+			}
+		}
+	})
+```
+
+That will return 
+
+```
+	[
+		{"day" : "2010/01/12", "tags" : {"nosql" : 4, "winter" : 10, "sledding" : 2}},
+		{"day" : "2010/01/13", "tags" : {"soda" : 5, "php" : 2}},
+		{"day" : "2010/01/14", "tags" : {"python" : 6, "winter" : 4, "nosql": 15}}
+	]
+```
+
+But this will return tag counts on everyday to the client which is extremely heavyload. We can use finalize to eliminate uneccessary items.
+
+```
+	db.runCommand({
+		"group" : {
+			"ns" : "posts",
+			"key" : {"day" : true},
+			"initial" : {"tags" : {}},
+			"$reduce" : function(doc, prev) {
+				for (i in doc.tags) {
+					if (doc.tags[i] in prev.tags) {
+						prev.tags[doc.tags[i]]++;
+					} else {
+						prev.tags[doc.tags[i]] = 1;
+					}
+				}
+			},
+			"finalize" : function(prev) {
+				var mostPopular = 0;
+				for (i in prev.tags) {
+					if (prev.tags[i] > mostPopular) {
+						prev.tag = i;
+						mostPopular = prev.tags[i];
+					}
+				}
+				delete prev.tags
+			}
+		}
+	})
+```
+
+This will return a simpler result.
+
+```
+	[
+		{"day" : "2010/01/12", "tag" : "winter"},
+		{"day" : "2010/01/13", "tag" : "soda"},
+		{"day" : "2010/01/14", "tag" : "nosql"}
+	]
+```
+
+##### Using a function as a key
+
+Example, query that is case-insensitive `MongoDB` and `mongodb`
+
+```
+	db.posts.group({
+		"ns" : "posts",
+		"$keyf" : function(x) { 
+			return x.category.toLowerCase(); 
+		},
+		"initializer" : ... 
+	})
+```
+
+* `$keyf` (key function) allows you can group by arbitrarily complex criteria.
+
+# Chapter 8: Application Design
+
+### Normalization versus Denormalization
+
+**Normalization** is dividing up data into multiple collections with references between collections.
+**Denormalization** is the opposite of normalization: embedding all of the data in a single document. 
+
+**Note**: MongoDB has no joining facilities, so gathering documents from multiple collections will require multiple queries.
+**Note**: Typically, normalizing makes writes faster and denormalizing makes reads faster. 
+
+##### Examples of Data Representations
+
+Example:
+
+Suppose we are storing information about students and the classes that they are taking. There are couple ways to store information.
+
+###### 1. Three collections
+ One way to represent this would be to have a **students** collection (each student is one document) and a **classes** collection (each class is one document). Then we could have a third collection (**studentClasses**) that contains references to the student and classes he is taking.
+
+If we wanted to find the classes a student was taking, we would query for the student in the **students** collection, query **studentClasses** for the course "_id"s, and then query the **classes** collection for the class information. Hence, it is **3** trips to he server.
+
+Benefits:
+
+* Light load for **students** collection.
+
+Drawbacks:
+
+* Slow
+
+###### 2. Two collections
+
+We can remove one of the dereferencing queries by embedding class references in the student's documents which gets rid of the **studentClasses** collection. In this case, we would query for the student in the **students** collection which will return class ids and then we query for those classes in **classes** collection. It only takes 2 queries.
+
+Benefits:
+
+* Faster the previous
+
+Drawbacks:
+
+* Heavy load for **students** collection.
+* Array should not store many entries.
+
+This is fairly popular way to structure data that does not need to be instantly accessible and changes, but not constantly.
+
+###### 3. One collections
+
+We can also embed documents in **classes** into **students** so that it only tooks one query.
+
+Benefits:
+
+* Faster the previous
+
+Drawbacks:
+
+* Super heavy load for **students** collection.
+* If a class is changed, you have to update many students.
+
+This is fairly popular way to structure data that does not need to be instantly accessible and changes, but not constantly.
+
+###### 4. Hybrid of embedding and referencing
+
+Create an array of subdocuments with the frequently used information, but with a reference to the actual document for more information
+
+Benefits:
+
+* Easier to update.
+* Fast for frequently used information.
+
+**Tips**: If data will be updated regularly, then normalizing it is a good idea. However, if it changes infrequently, then there is little benefit to optimize the update process at the expense of every read your application performs. Therefore, embeb documents that are not changed frequently, and suer reference to the other.
+
+**Tips**: To some extent, the more information you are generating the less of it you should embed. If the embedded fields or number of embedded fields is supposed to grow without bound then they should generally be referenced, not embedded. Things like comment trees or activity lists should be stored as their own documents, not embedded.
+
+
+| Embedding is better for                                        | References are better for                       |
+|----------------------------------------------------------------|-------------------------------------------------|
+| Small subdocuments                                             | Large subdocuments                              |
+| Data that does not change regularly                            | Volatile data                                   |
+| When eventual consistency is acceptable                        | When immediate consistency is necessary         |
+| Documents that grow by a small amount                          | Documents that grow a large amount              |
+| Data that you’ll often need to perform a second query to fetch | Data that you’ll often exclude from the results |
+| Fast reads                                                     | Fast writes                                     |
+
