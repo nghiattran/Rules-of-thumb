@@ -2157,4 +2157,61 @@ If a member seeking election receives “ayes” from a majority of the set, it 
 
 ##### Priority
 
-**Priority** is how strongly this member “wants” to become primary
+**Priority** is how strongly this member “wants” to become primary.
+
+Priority:
+* Range from 0 to 100.
+* Default is 1.
+* 0 priority can never become primary (**passive member**).
+* The highest-priority member tends to be elected primary.
+
+Add replica member with priority:
+
+```
+    rs.add({
+        "_id" : 4, 
+        "host" : "server-4:27017", 
+        "priority" : 1.5
+    })
+```
+
+In this case, if all other members have default priority 1, `server-4` will be elected primary as soon as it catch up with other members. If `server-4` can't catch up, it will not be elected.
+
+**Note**: Reconfigurations must always be sent to a member that could be primary with the new configuration. (Not sure how it works, cannot set priority to 0???)
+
+##### Hidden
+
+Clients do not route requests to hidden members and hidden members are not preferred as replication sources (although they will be used if more desirable sources are not available).
+
+A hidden member must have 0 priority. Hidden a member:
+
+```
+    // Get config data
+    > var config = rs.config()
+
+    // Set hidden be 0
+    > config.members[2].hidden = 0
+    0
+
+    // Set priority to 0
+    > config.members[2].priority = 0
+    0
+
+    // Reconfigure
+    > rs.reconfig(config)
+```
+
+**Note**: `rs.status()` and `rs.config()` will still show the member; it only disappears from `isMaster()`.
+
+##### Slave Delay
+(LINKTO Restoring from a Delayed Secondary)
+slaveDelay requires the member’s priority to be 0. If your application is routing reads to secondaries, you should make slave delayed members hidden so that reads are not routed to them.
+
+##### Building Indexes
+
+If you don't want a secondary to have the same indexes on the primary, you can turn it off by setting `"buildIndexes" : false` in the member’s configuration.
+
+Required 0 priority.
+
+**Caution**: if you set `buildIndexes` to `false`, you can not reconfigure it to normal. You have to remove the member and reconnect it again.
+
