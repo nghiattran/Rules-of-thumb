@@ -1736,3 +1736,425 @@ Benefits:
 | Data that you’ll often need to perform a second query to fetch | Data that you’ll often exclude from the results |
 | Fast reads                                                     | Fast writes                                     |
 
+### Cardinality
+
+**Cardinality** is how many references a collection has to another collection. Common relationships are one-to-one, one-to-many, or many-to-many.
+
+MongoDB, it can be conceptually useful to split *many* into subcategories: *many* and *few*. 
+
+* **one-to-few**: each author only writes a few posts.
+* **many-to-few**: many more blog posts than tags.
+
+Generally, *few* relationships will work better with embedding, and *many* relationships will work better as references.
+
+##### Friends, Followers, and Other Inconveniences
+
+> Keep your friends close and your enemies embedded.
+
+**Ways to implement subscribing**:
+
+* **Put the producer in the subscriber’s document**
+
+So a user's document looks like:
+
+```
+    {
+        "_id" : ObjectId("51250a5cd86041c7dca8190f"),
+        "username" : "batman",
+        "email" : "batman@waynetech.com"
+        "following" : [
+            ObjectId("51250a72d86041c7dca81910"),
+            ObjectId("51250a7ed86041c7dca81936")
+        ]
+    }
+```
+
+To find all activities that have been published that she’d be interested in, the query would be:
+
+```
+    db.activities.find({
+        "user" : {
+            "$in" : user["following"]
+        }
+    }) 
+``` 
+
+To find everyone who is interested in a newly published activity,  the query would be::
+
+```
+    db.users.find({
+        "following": "user"
+    }) 
+``` 
+
+* **Append the followers to the producer’s document**
+
+So a producers's document looks like:
+
+```
+    {
+        "_id" : ObjectId("51250a7ed86041c7dca81936"),
+        "username" : "joker",
+        "email" : "joker@mailinator.com"
+        "followers" : [
+            ObjectId("512510e8d86041c7dca81912"),
+            ObjectId("51250a5cd86041c7dca8190f"),
+            ObjectId("512510ffd86041c7dca81910")
+        ]
+    }
+```
+
+The downside is that now you need to query the whole users collection to find everyone a user follows (opposite case as above).
+
+Either of these options comes with an additional downside: they make your user document larger and more volatile.
+
+* **Subscriptions in another collection**
+
+So a subscriptions's document looks like:
+
+```
+    {
+        "_id" : ObjectId("51250a7ed86041c7dca81936"),       // followee's "_id"
+        "followers" : [
+            ObjectId("512510e8d86041c7dca81912"),
+            ObjectId("51250a5cd86041c7dca8190f"),
+            ObjectId("512510ffd86041c7dca81910")
+        ]
+    }
+```
+
+This keeps your user documents svelte but takes an extra query to get the followers.
+
+**Tips**: If you put this `subscriptions` collection in another database, you can also compact it without affecting the `users` collection too much.
+
+##### Dealing with the Wil Wheaton effect
+
+Regardless of which strategy you use, embedding only works with a limited number of subdocuments or references. 
+
+The typical way of compensating this is to have a “continuation” document, if necessary. The following shows the structure for a user's document:
+
+```
+    {
+        "_id" : ObjectId("51252871d86041c7dca8191a"),
+        "username" : "wil",
+        "email" : "wil@example.com",
+        "tbc" : [
+            ObjectId("512528ced86041c7dca8191e"),
+            ObjectId("5126510dd86041c7dca81924")
+        ]
+        "followers" : [
+            ObjectId("512528a0d86041c7dca8191b"),
+            ObjectId("512528a2d86041c7dca8191c"),
+            ObjectId("512528a3d86041c7dca8191d"),
+            ...
+        ]
+    }
+    {
+        "_id" : ObjectId("512528ced86041c7dca8191e"),
+        "followers" : [
+        ObjectId("512528f1d86041c7dca8191f"),
+        ObjectId("512528f6d86041c7dca81920"),
+        ObjectId("512528f8d86041c7dca81921"),
+        ...
+        ]
+    }
+    {
+        "_id" : ObjectId("5126510dd86041c7dca81924"),
+        "followers" : [
+        ObjectId("512673e1d86041c7dca81925"),
+        ObjectId("512650efd86041c7dca81922"),
+        ObjectId("512650fdd86041c7dca81923"),
+        ...
+        ]
+    }
+```
+
+Then add application logic to support fetching the documents in the "to be continued" (`tbc`) array.
+
+### Optimizations for Data Manipulation
+
+Optimizations:
+* Bottleneck is by evaluating its read and write performance.
+
+-  Optimizing reads:
+    * Having the correct indexes.
+    * Returning as much of the information as possible in a single document.
+-  Optimizing writes:
+    * Minimizing the number of indexes you have.
+    * Making updates as efficient as possible
+
+##### Optimizing for Document Growth
+
+Factors:
+
+1. Whether your documents are going to growth.
+2. And by how much.
+
+**Manually padding**
+
+If your documents have predictable size, manually padding by creating the document with a large field that will later be removed will prevent moving documents around. Thus, it makes writes fater.
+
+**Tips**: If your document has one field that grows, try to keep is as the last field in the document (but before "garbage") so that MongoDb does not have to rewrite the growing field.
+
+##### Removing Old Data
+
+Three popular options for removing old data:
+
+1. Capped collections. (LINKTO Capped collections)
+2. TTL collections. (LINKTO TTL collections)
+3. Dropping collections per time period.
+
+### Planning Out Databases and Collections
+
+**Tips**: If there are documents that need to be queried or aggregated together, those are good candidates for putting in one big collection.
+
+For databases, the big issues to consider are **locking** (you get a read/write lock per database) and storage. Each database resides in its own files and often its own directory so that you could mount different databases to different volumes. Thus, you may want all items within a database to be of similar “quality,” similar access pattern, or similar traffic levels.
+
+For example, suppose we have an application with 3 components: a **logging** (a huge amount of not-very-valuable data), a **users** collection (a small amount of important data), a **activities** collections for user-generated data (high traffic, medium valuable, huge amount).
+
+Splitting these up by importance, we have 3 databases: **logs**, **activities**, and **users** and store those databases in proper dishes.
+
+### When Not to Use MongoDB
+
+* MongoDB does not support transactions.
+* Joining many different types of data across many different dimensions.
+
+
+
+# CHAPTER 9: Setting Up a Replica Set
+
+### Introduction to Replication
+
+**Replication** is a way of keeping identical copies of your data on multiple servers and is recommended for all production deployments. Replication keeps your application runing and your data safe, even if something happens to one or more of your servers.
+
+With MongoDB, you set up replication by creating a replica set. A replica set is a group of servers with one primary, the server taking client requests, and multiple secondaries, servers that keep copies of the primary’s data. If the primary crashes, the secondaries can elect a new primary from amongst themselves. If the data on a server is damaged or inaccessible, you can make a new copy of the data from one the other members of the set.
+
+### A One-Minute Test Setup
+
+**Note**: This quick-start method stores data in /data/db, so make sure that directory exists and is writable by your user before running this code.
+
+Start up a mongo shell with the `--nodb` option, which allows you to start a shell that is not connected to any mongod:
+
+```sh
+    $ mongo --nodb
+```
+
+1. Create a replica
+
+```sh
+    // setup replica with 3 servers: 1 primary and 2 secondaries
+    $ replicaSet = new ReplSetTest({"nodes" : 3})
+
+    // starts three mongod processes
+    $ replicaSet.startSet()
+
+    // configures replication
+    $ replicaSet.initiate()
+
+    // connect to one of the servers
+    $ conn1 = new Mongo("localhost:31000")
+
+    // after this, "$"" will change to "testReplSet:PRIMARY$ "
+```
+
+2. Check if a master replica
+
+```sh
+    testReplSet:PRIMARY$ primaryDB.isMaster()
+    {
+        "setName" : "testReplSet",
+        "ismaster" : true,
+        "secondary" : false,
+        "hosts" : [
+            "wooster:31000",
+            "wooster:31002",
+            "wooster:31001"
+        ],
+        "primary" : "wooster:31000",
+        "me" : "wooster:31000",
+        "maxBsonObjectSize" : 16777216,
+        "localTime" : ISODate("2012-09-28T15:48:11.025Z"),
+        "ok" : 1
+    }
+```
+
+Secondaries may fall behind the primary (or lag) and not have the most current writes, so secondaries will refuse read requests by default to prevent applications from accidentally reading stale data. In this case, you will get an error:
+
+```
+    secondaryDB.coll.find()
+    error: { "$err" : "not master and slaveok=false", "code" : 13435 }
+```
+
+To query from secondaries, you have to call `conn.setSlaveOk()`. Notice that slaveOk is set on the connection, not the database.
+
+**Note**: The secondary will only perform writes that it gets through replication, not from clients.
+
+**Automatic failover**: If the primary goes down, one of the secondaries will automatically be elected primary.
+
+3. Shutdown replica set:
+
+```
+    replicaSet.stopSet()
+```
+
+**Keys concepts**:
+
+* Clients can send a primary all the same operations they could send a standalone server (reads, writes, commands, index builds, etc.).
+* Clients cannot write to secondaries.
+* Clients, by default, cannot read from secondaries. By explicitly call `conn.setSlaveOk()`, clients can read from secondaries.
+
+### Configuring a Replica Set
+
+Start server 1 with `<name>` is your replica set name and `mongod.conf` is your config file.
+
+```sh
+    $ mongod --replSet <name> -f mongod.conf --fork
+```
+
+Start up two more mongod servers with the replSet option
+
+```sh
+    $ ssh server-2
+    server-2$ mongod --replSet <name> -f mongod.conf --fork
+    server-2$ exit
+    $
+    $ ssh server-3
+    server-3$ mongod --replSet <name> -f mongod.conf --fork
+    server-3$ exit
+```
+
+However, at this time, each mongod does not yet know that the others exist so we have to tell it.
+
+```
+    // Create config document
+    > config = {
+        "_id" : <name>,
+        "members" : [
+            {"_id" : 0, "host" : "server-1:27017"},
+            {"_id" : 1, "host" : "server-2:27017"},
+            {"_id" : 2, "host" : "server-3:27017"}
+        ]
+    }
+
+    > // connect to server-1
+    > db = (new Mongo("server-1:27017")).getDB("test")
+    >
+    > // initiate replica set
+    > rs.initiate(config)
+    {
+     "info" : "Config now saved locally. Should come online in about a minute.",
+     "ok" : 1
+    }
+```
+
+**Tips**: You cannot convert a standalone server to a replica set without some downtime for restarting it and initializing the set. Thus, even if you only have one server to start out with, you may want to configure it as a one-member replica set. That way, if you want to add more members later, you can do so without downtime.
+
+**Caution**: You must use the mongo shell to configure replica sets. There is no way to do file-based replica set configuration.
+
+### Changing Your Replica Set Configuration
+
+Add a new replica member:
+
+```
+    > rs.add("server-4:27017")
+```
+
+Remove a replica member:
+
+```
+    > rs.remove("server-4:27017")
+    Fri Sep 28 16:44:46 DBClientCursor::init call() failed
+    Fri Sep 28 16:44:46 query failed : admin.$cmd { replSetReconfig: {
+     _id: "testReplSet", version: 2, members: [ { _id: 0, host: "ubuntu:31000" },
+     { _id: 2, host: "ubuntu:31002" } ] } } to: localhost:31000
+    Fri Sep 28 16:44:46 Error: error doing query:
+     failed src/mongo/shell/collection.js:155
+    Fri Sep 28 16:44:46 trying reconnect to localhost:31000
+    Fri Sep 28 16:44:46 reconnect localhost:31000 ok
+```
+
+**Note**: When you remove a member or do any configuration change except adding a new member, you will get an error about not being able to connect to the database in the shell. This is okay; it actually means the reconfiguration succeeded. When you reconfigure MongoDB forces the primary server to close all connect for reconfiguration but it will automatically reconnect on your next operation.
+
+**Caution**: Your replica will not have a primary, which means you can not perform writes, for a moment or two after reconfiguring.
+
+You can can check your reconfiguration by running:
+
+```
+    > rs.config()
+    {
+    "   _id" : "testReplSet",
+        "version" : 2,
+        "members" : [
+            {
+                "_id" : 1,
+                "host" : "server-2:27017"
+            },
+            {
+                "_id" : 2,
+                "host" : "server-3:27017"
+            },
+            {
+                "_id" : 3,
+                "host" : "server-4:27017"
+            }
+        ]
+    }
+```
+
+**Note**: `version` is incremented for each reconfiguration starts from 1.
+
+Change an existing server.
+
+```
+    // Get configuration
+    > var config = rs.config()
+
+    // Set new configuration
+    > config.members[1].host = "server-2:27017"
+
+    // Reconfig
+    > rs.reconfig(config)
+```
+
+### How to Design a Set
+
+> Replica sets are all about majorities: you need a majority of members to elect a primary, a primary can only stay primary so long as it can reach a majority, and a write is safe when it’s been replicated to a majority
+
+**Majority**:
+
+* More than half of all members in the set.
+* Is based on the set’s configuration.
+
+Recommended configurations:
+
+* A majority of the set in one data center. 
+* An equal number of servers in each data center, plus a tie-breaking server in a third location. 
+
+##### How Elections Work
+
+If a member seeking election receives “ayes” from a majority of the set, it becomes primary. If even one server vetoes the election, the election is canceled. A member vetoes an election when it knows any reason that the member seeking election shouldn’t become primary.
+
+### Member Configuration Options
+
+##### Creating Election Arbiters
+
+**Arbiter** whose only purpose is to participate in elections. Arbiters hold no data and aren’t used by clients: they just provide a majority for two-member sets.
+
+```
+    $ ssh server-5
+    server-5$ mongod --replSet <name> -f mongod.conf --fork
+
+    > rs.add({
+        "_id" : 4, 
+        "host" : "server-5:27017", 
+        "arbiterOnly" : true
+    })
+```
+
+**Note**: An arbiter, once added to the set, is an arbiter forever: you cannot reconfigure an arbiter to become a nonarbiter, or vice versa.
+
+**Use at most one arbiter**: it takes longer to do an election and if you have an even number of nodes because you added an arbiter, your arbiters can cause ties.
+
+##### Priority
+
+**Priority** is how strongly this member “wants” to become primary
