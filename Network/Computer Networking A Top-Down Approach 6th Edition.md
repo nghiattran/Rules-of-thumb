@@ -178,3 +178,70 @@ Packet switching:
 ### 1.3.3 A Network of Networks
 
 Users are connected to each other through ISPs and ISPs are also interconnected. This is called a ** network of networks**.
+
+Network structures:
+
+1. **Network Structure 1**, interconnects all of the access **ISPs** with a **single global transit ISP**.
+
+2. **Network Structure 2** consists of the hundreds of thousands of access ISPs and multiple global transit ISPs.
+	* Global transit providers (**tier-1 ISPs**):
+		* **Regional ISP** provides Interter to access ISPs in the region.
+	* Access ISPs
+
+3. **Network Structure 3** is a multi-tier hierarchy.
+
+A **points of presence** (**PoP**) is simply a group of one or more routers (at the same location) in the provider’s network where customer ISPs can connect into the provider ISP. 
+
+**Multi-home** means that ISP can to connect to two or more provider ISPs. 
+
+**Internet Exchange Point** (**IXP**) is a meeting point where multiple ISPs can peer together.
+
+4. **Network Structure 4** consists of:
+	Access ISPs, regional ISPs, tier-1 ISPs, PoPs, multi-homing, peering, and IXPs
+
+5. **Network Structure 5** built on top of Network Structure 4 and **content provider networks**.
+
+## 1.4 Delay, Loss, and Throughput in Packet-Switched Networks
+
+### 1.4.1 Overview of Delay in Packet-Switched Networks
+
+> **Total nodal delay** = **nodal processing delay** + **queuing delay** + **transmission
+delay** + **propagation delay**
+
+#### Processing Delay
+
+Processing delay:
+
+* Time required to examine the packet’s header and determine where to direct the packet.
+* Check for bit-level errors in the packet that occurred in transmitting the packet’s bits.
+
+#### Queuing Delay
+
+Queuing delay it is a delay that occurs when packets wait to be transmitted onto the link.
+
+* If the queue is empty and no other packet is currently being transmitted, then our packet’s queuing delay will be zero.
+* On the other hand, if the traffic is heavy and many other packets are also waiting to be transmitted, the queuing delay will be long.
+
+#### Transmission Delay
+
+Since our packet can be transmitted only after all the packets that have arrived before it have been transmitted. Transmission delay is amount of time required to push (that is, transmit) all of the packet’s bits into the link. 
+
+> **Transmission delay** = **L**/**R**
+
+Which:
+**L**: packet length (bits)
+**R**: transmission rate(bits/sec)
+
+#### Propagation Delay
+
+**propagation delay** is the time required to propagate from the beginning of the link to router B.
+
+> **Propagation delay** = **d**/**s**
+
+Which:
+**d**: distance (m)
+**s**: speed (m/sec)
+
+#### Comparing Transmission and Propagation Delay
+
+Remember that **transmission delay** does not dependent on physical distance between 2 routers, it based on amount data can be process at a time. On the other hand, **propagation delay** is based on physical length of the two routers.
