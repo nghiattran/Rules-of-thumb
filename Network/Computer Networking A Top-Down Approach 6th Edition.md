@@ -54,9 +54,9 @@ The **access network** is the network that physically connects an end system to 
 
 Today, the two most prevalent types of broadband residential access are **digital subscriber line** (**DSL**) and **cable**. 
 
-1. DSL Internet access can be obtained from the same local telephone company (telco) that provides its wired local phone access. Thus, when DSL is used, a customer’s telco is also its ISP.
+##### 1. DSL Internet access can be obtained from the same local telephone company (telco) that provides its wired local phone access. Thus, when DSL is used, a customer’s telco is also its ISP.
 
-2. Cable Internet access makes use of the cable television company’s existing cable television infrastructure. 
+##### 2. Cable Internet access makes use of the cable television company’s existing cable television infrastructure. 
 
 One important characteristic of cable Internet access is that it is a shared broadcast medium: 
 
@@ -68,24 +68,113 @@ One important characteristic of cable Internet access is that it is a shared bro
 
 An up-and-coming technology that promises even higher speeds is the deployment of **fiber to the home** (**FTTH**).
 
-Optical distribution networks:
+FTTH distribution networks:
 
 * Direct fiber: one fiber leaving the central office for each home.
 * Shared fiber: one fiber leaving the central office for mutilple home.
 	Tow competing optical-distribution network architectures that perform this splitting:
+
 		1. **Active optical networks** (**AONs*)
+			(LINKTO Ethernet Chapter 5)
+
 		2. **Passive optical networks** (**PONs**)
+			* Each home has an optical network terminator (ONT) is connected by dedicated optical fiber to a neighborhood splitter.
+			* The splitter combines a number of homes into a single, shared optical fiber.
+			* The shared fiber connects to an optical line terminator (OLT) in the telco’s CO.
+			* The OLT connects to the Internet via a telco router.
 
-**PON**:
-
-* Each home has an optical network terminator (ONT) is connected by dedicated optical fiber to a neighborhood splitter.
-* The splitter combines a number of homes into a single, shared optical fiber.
-* The shared fiber connects to an optical line terminator (OLT) in the telco’s CO.
-* The OLT connects to the Internet via a telco router.
-
-3. A **satellite** link can also be used to connect a residence to the Internet
+##### 3. A **satellite** link can also be used to connect a residence to the Internet
 at speeds of more than 1 Mbps.
 
-4. **Dial-up access** over traditional phone lines is based on the same model as DSL—a home modem connects over a phone line to a modem in the ISP.
+##### 4. **Dial-up access** over traditional phone lines is based on the same model as DSL—a home modem connects over a phone line to a modem in the ISP.
 
 #### Access in the Enterprise (and the Home): Ethernet and WiFi
+
+On corporate and university campuses, and increasingly in home settings, a local area network (LAN) is used to connect an end system to the edge router. 
+
+### 1.2.2 Physical Media
+
+Consider a bit traveling from one end system, this bit is transmitted from router to router (**transmitter-receiver pair**) many times to get to the destination. For each transmitter-receiver pair, the bit is sent by propagating electromagnetic waves or optical pulses across a **physical medium** (cable, wire, radio spectrum,... ). 
+
+Physical media fall into two categories:
+
+1. Guided media.
+	Waves are guided along a **solid** medium, such as a fiber-optic cable, a twisted-pair copper wire, or a coaxial cable
+
+2. Unguided media.
+	waves propagate in the atmosphere and in outer space, such as in a **wireless** LAN or a digital satellite channel.
+
+
+## 1.3 The Network Core
+
+Two fundamental approaches to moving data through a network of links and switches:
+
+1. Packet Switching.
+2. Circuit Switching.
+
+### 1.3.1 Packet Switching
+
+Packet Switching:
+
+* To send a message from a source end system to a destination end system, the source breaks long messages into smaller chunks of data known as **packets**.
+
+* Between source and destination, each packet travels through communication **links** and **packet switches** (for which there are two predominant types, **routers** and **linklayer switches**).
+
+* If a source end system or a packet switch is sending a packet of **L** bits over a link with transmission rate **R** bits/sec, then the time to transmit the packet is **L/R** seconds.
+
+#### Store-and-Forward Transmission
+
+**Store-and-forward transmission**: the packet switch must receive the entire packet before it can begin to transmit the first bit of the packet onto the
+outbound link.
+
+Delay formula
+
+> d(end-to-end) = (N-1)*L/R + L/R = N*L/R
+
+Which:
+	**N**: number of links or packages.
+	**L**: length.
+	**R**: tranmission rate.
+
+`(N-1)*L/R` are the time it takes to transmit N packages and `L/R` for forwarding delay.
+
+#### Queuing Delays and Packet Los
+
+Each packet switch has multiple links attached to it. For each attached link, the packet switch has an output buffer (also called an output queue), which stores packets that the router is about to send into that link. 
+
+If an arriving packet needs to be transmitted onto a link but finds the link busy with the transmission of another packet, the arriving packet must wait in the output buffer. This is called **queuing delays**. 
+
+If the buffer is completely full with other packets waiting for transmission, either the arriving packet or one of the already-queued packets will be dropped. This is called **packet loss**. 
+
+#### Forwarding Tables and Routing Protocols
+
+Forwarding process: 
+
+* When a source end system wants to send a packet to a destination end system, the source includes the destination’s IP address in the packet’s header.
+
+* When a packet arrives at a router, the router examines the address and searches its **forwarding table**, using this destination address, to find the appropriate outbound link. 
+
+* Then the router directs the packet to this outbound link.
+
+The Internet has a number of special **routing protocols** that are used to automatically set the forwarding tables. Routing protocols determine the shortest path and use the shortest path results to configure the forwarding tables in the routers.
+
+### 1.3.2 Circuit Switching
+
+Circuit Switching:
+
+* The resources needed along a path to provide for communication between the end systems are reserved for the duration of the communication session.
+
+TODO: Come back to this
+
+### Packet Switching Versus Circuit Switching
+
+Packet switching:
+
+* Not suitable for real-time services.
+* Better sharing of transmission capacity.
+* Simpler, more efficient, and less costly to implement.
+* Allocates link use on demand.
+
+### 1.3.3 A Network of Networks
+
+Users are connected to each other through ISPs and ISPs are also interconnected. This is called a ** network of networks**.
