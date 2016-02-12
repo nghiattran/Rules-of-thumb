@@ -2215,3 +2215,105 @@ Required 0 priority.
 
 **Caution**: if you set `buildIndexes` to `false`, you can not reconfigure it to normal. You have to remove the member and reconnect it again.
 
+# Chapter 10: Components of a Replica Set
+
+### Syncing
+
+Replication is concerned with keeping an identical copy of data on multiple servers  by keeping a log of operations, or oplog, containing every write that a primary performs. 
+
+Each secondary maintains its own **oplog**, recording each operation it replicates from the primary.
+
+##### Initial Sync
+
+When a member of the set starts up, it will check if it is in a valid state to begin syncing from someone. If not, it will attempt to make a full copy of data from another member of the set. This is call **initial sync**.
+
+1. Chooses a member to sync from, creates an identifier for itself in local.me, and drops all existing databases to start with a clean slate.
+
+2. Clone initial data of all records from the sync source. 
+
+3. Then the **first** oplog application occurs, which applies any operations that happened during the clone. MongoDB will reclone if there is missing data.
+
+4. Then the **second** oplog applies operations that happened during the first oplog application.
+
+5. At this point, the data should exactly match the data set as it existed at some point on the primary so that the secondary can start building indexes. 
+
+6. The **third** oplog is merely to prevent the member from becoming a secondary while it is still far behind the sync source. It applies all operations happened while indexes were building.
+
+7. The member finishes the initial sync process and transitions to normal syncing.
+
+**Tips**: The best way to track an initial sync’s progress is by watching the server’s log.
+**Tips**: Restoring from backup is often faster than copying all of your data through mongod.
+
+**Caution**: Also, cloning can ruin the sync source’s working set.
+
+##### Handling Staleness
+
+If a secondary falls too far behind the actual operations being performed on the sync source, the secondary will go **stale**. 
+A stale secondary:
+
+* Unable to continue catch up because every operation in the sync source’s oplog is too far ahead.
+
+* Skip perations if it continued to sync.
+
+Causes:
+
+* The secondary has had downtime.
+* More writes than it can handle.
+* Too busy handling reads.
+
+Solution: (LINKTO  “Resizing the Oplog”)
+
+To avoid stale secondaries, it’s important to have a large oplog so that the primary can store a long history of operations. A larger oplog use more disk space but this is a good trade-off because the disk space tends to be cheap and little of the oplog is usually in use, and therefore it doesn’t take up much RAM.
+
+### Heartbeats
+
+A **heartbeat request** is a short message that checks everyone’s state.
+
+One of the most important functions of heartbeats is to let the primary know if it can reach a majority of the set.
+
+##### Member States
+
+Members also communicate what state they are in via heartbeats.
+
+Normal states for a member:
+
+* **STARTUP**
+
+    This is the state MongoDB goes into when you first start a member. It’s the state when MongoDB is attempting to load a member’s replica set configuration. Once the configuration has been loaded, it transitions to STARTUP2.
+
+* **STARTUP2**
+
+    This state will last throughout the initial sync process but on a normal member, it should only ever last a few seconds. It just forks off a couple of threads to handle replication and elections and then transitions into the next state: RECOVERING.
+
+* **RECOVERING**
+
+    This state means that the member is operating correctly but is not available for reads. This state is a bit overloaded: you may see it in a variety of situations.
+
+* **DOWN**
+
+    If a member was up but then becomes unreachable. Note that a member reported as "down" might, in fact, still be up, just unreachable due to network issues.
+
+* **UNKNOWN**
+
+    If a member has never been able to reach another member, it will not know what state it’s in, so it will report it as unknown. This generally indicates that the unknown member is down or that there are network problems between the two members.
+
+* **REMOVED**
+
+    This is the state of a member that has been removed from the set. If a removed member is added back into the set, it will transition back into its "normal" state.
+
+* **ROLLBACK**
+
+    This state is used when a member is rolling back data, as described in **Rollbacks** (LINKTO rollback). At the end of the rollback process, a server will transition back into the recovering state and then become a secondary.
+
+* **FATAL**
+
+    Something uncorrectable has gone wrong and this member has given up trying to function normally. You should take a look at the log to figure out what has caused it to go into this state (grep for "replSet FATAL" to find the point where it went into the FATAL state). You generally will have to shut down the server and resync it or
+    restore from backup once it’s in this state.
+
+##### Rollbacks
+
+If a primary does a write and goes down before the secondaries have a chance to replicate it, the next primary elected may not have the write. 
+    
+**Rollback** is used to undo ops that were not replicated before failover.
+
+TODO: come back
