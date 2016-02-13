@@ -54,9 +54,13 @@ The **access network** is the network that physically connects an end system to 
 
 Today, the two most prevalent types of broadband residential access are **digital subscriber line** (**DSL**) and **cable**. 
 
-##### 1. DSL Internet access can be obtained from the same local telephone company (telco) that provides its wired local phone access. Thus, when DSL is used, a customer’s telco is also its ISP.
+##### 1. DSL 
 
-##### 2. Cable Internet access makes use of the cable television company’s existing cable television infrastructure. 
+> DSL Internet access can be obtained from the same local telephone company (telco) that provides its wired local phone access. Thus, when DSL is used, a customer’s telco is also its ISP.
+
+##### 2. Cable 
+
+> Cable Internet access makes use of the cable television company’s existing cable television infrastructure. 
 
 One important characteristic of cable Internet access is that it is a shared broadcast medium: 
 
@@ -72,21 +76,26 @@ FTTH distribution networks:
 
 * Direct fiber: one fiber leaving the central office for each home.
 * Shared fiber: one fiber leaving the central office for mutilple home.
-	Tow competing optical-distribution network architectures that perform this splitting:
 
-		1. **Active optical networks** (**AONs*)
-			(LINKTO Ethernet Chapter 5)
+Two competing optical-distribution network architectures that perform this splitting:
 
-		2. **Passive optical networks** (**PONs**)
-			* Each home has an optical network terminator (ONT) is connected by dedicated optical fiber to a neighborhood splitter.
-			* The splitter combines a number of homes into a single, shared optical fiber.
-			* The shared fiber connects to an optical line terminator (OLT) in the telco’s CO.
-			* The OLT connects to the Internet via a telco router.
+	1. **Active optical networks** (**AONs*)
+		(LINKTO Ethernet Chapter 5)
 
-##### 3. A **satellite** link can also be used to connect a residence to the Internet
+	2. **Passive optical networks** (**PONs**)
+		* Each home has an optical network terminator (ONT) is connected by dedicated optical fiber to a neighborhood splitter.
+		* The splitter combines a number of homes into a single, shared optical fiber.
+		* The shared fiber connects to an optical line terminator (OLT) in the telco’s CO.
+		* The OLT connects to the Internet via a telco router.
+
+##### 3. Satellite
+
+> A **satellite** link can also be used to connect a residence to the Internet
 at speeds of more than 1 Mbps.
 
-##### 4. **Dial-up access** over traditional phone lines is based on the same model as DSL—a home modem connects over a phone line to a modem in the ISP.
+##### 4. Dial-up access
+
+> **Dial-up access** over traditional phone lines is based on the same model as DSL—a home modem connects over a phone line to a modem in the ISP.
 
 #### Access in the Enterprise (and the Home): Ethernet and WiFi
 
@@ -99,10 +108,12 @@ Consider a bit traveling from one end system, this bit is transmitted from route
 Physical media fall into two categories:
 
 1. Guided media.
+
 	Waves are guided along a **solid** medium, such as a fiber-optic cable, a twisted-pair copper wire, or a coaxial cable
 
 2. Unguided media.
-	waves propagate in the atmosphere and in outer space, such as in a **wireless** LAN or a digital satellite channel.
+
+	Waves propagate in the atmosphere and in outer space, such as in a **wireless** LAN or a digital satellite channel.
 
 
 ## 1.3 The Network Core
@@ -279,24 +290,24 @@ Which:
 		- The average rate at which bits arrive at the queue exceeds the rate at which the bits can be transmitted from the queue.
 		- Delay is infinity.
 
-	* **La**/**R** <= 1:
-		* Packets arrive periodically:
+* **La**/**R** <= 1:
+	* Packets arrive periodically:
 
-			- If a packet arrives, it will be transmitted before another one arrives.
-			- So, very packet will arrive at an empty queue and there will be no queuing delay.
+		- If a packet arrives, it will be transmitted before another one arrives.
+		- So, very packet will arrive at an empty queue and there will be no queuing delay.
 
-		* Packets arrive in bursts but periodically:
+	* Packets arrive in bursts but periodically:
 
-			- The first packet will be transmitted with no queueing delay, but the second one has L/R seconds delay, and the *n*th will have (n-1)*L/R seconds delay.
-			- A significant average queuing delay.
+		- The first packet will be transmitted with no queueing delay, but the second one has L/R seconds delay, and the *n*th will have (n-1)*L/R seconds delay.
+		- A significant average queuing delay.
 
-		1. **La**/**R** close to 0:
+	1. **La**/**R** close to 0:
 
-			* Queuing delay is close to 0.
+		* Queuing delay is close to 0.
 
-		2. **La**/**R** close to 1:
+	2. **La**/**R** close to 1:
 
-			* Queuing delay is large.
+		* Queuing delay is large.
 
 #### Packet Loss
 
@@ -364,7 +375,7 @@ Five layer:
 
 ###### 1. Application Layer
 
-**Application layer** is where network applications and their application-layer protocols reside.
+> **Application layer** is where network applications and their application-layer protocols reside.
 
 Application protocols:
 
@@ -376,7 +387,7 @@ Application protocols:
 
 ###### 2. Transport Layer
 
-The Internet’s **transport layer** transports application-layer messages between application endpoints. 
+> The Internet’s **transport layer** transports application-layer messages between application endpoints. 
 
 Transport protocols:
 
@@ -397,7 +408,7 @@ Transport protocols:
 
 ###### 3. Network Layer
 
-The Internet’s **network layer** (simply referred as ** IP layer**) is responsible for moving network-layer packets known as **datagrams** from one host to another. 
+> The Internet’s **network layer** (simply referred as ** IP layer**) is responsible for moving network-layer packets known as **datagrams** from one host to another. 
 
 Network protocols:
 
@@ -413,7 +424,7 @@ Network protocols:
 
 ###### 4. Link Layer
 
-The network layer passes the datagram down to the **link layer**, which delivers the datagram to the next node along the route. 
+> The network layer passes the datagram down to the **link layer**, which delivers the datagram to the next node along the route. 
 
 Link-layer protocols:
 
@@ -424,7 +435,7 @@ Link-layer protocols:
 
 ###### 5. Physical Layer
 
-Move individual bits from end to end
+> Move individual bits from end to end
 
 ##### The OSI Model
 
@@ -432,7 +443,7 @@ Five layers are similar as above.
 
 ###### 6. Presentation layer
 
-**Presentation layer** provides services that allow communicating applications to interpret the meaning of data exchanged.
+> **Presentation layer** provides services that allow communicating applications to interpret the meaning of data exchanged.
 
 Services:
 
@@ -441,7 +452,7 @@ Services:
 
 ###### 7. Session layer
 
-**Session layer** provides for delimiting and synchronization of data exchange, including the means to build a checkpointing and recovery scheme.
+> **Session layer** provides for delimiting and synchronization of data exchange, including the means to build a checkpointing and recovery scheme.
 
 ### 1.5.2 Encapsulation
 
@@ -467,7 +478,7 @@ Routers are capable of implementing the IP protocol and links are not.
 
 #### Server and network attacks
 
-**Denial-of-service** (**DoS**) attacks.
+> **Denial-of-service** (**DoS**) attacks.
 
 Most Internet DoS attacks fall into one of three categories:
 
@@ -492,8 +503,8 @@ In a **distributed DoS** (**DDoS**) attack the attacker controls multiple source
 
 #### Packet sniffer
 
-A passive receiver that records a copy of every packet that flies by is called a **packet sniffer**.
+> A passive receiver that records a copy of every packet that flies by is called a **packet sniffer**.
 
 #### Attackers can masquerade as someone you trust
 
-The ability to inject packets into the Internet with a false source address is known as **IP spoofing**.
+> The ability to inject packets into the Internet with a false source address is known as **IP spoofing**.
