@@ -54,9 +54,13 @@ The **access network** is the network that physically connects an end system to 
 
 Today, the two most prevalent types of broadband residential access are **digital subscriber line** (**DSL**) and **cable**. 
 
-##### 1. DSL Internet access can be obtained from the same local telephone company (telco) that provides its wired local phone access. Thus, when DSL is used, a customer’s telco is also its ISP.
+##### 1. DSL 
 
-##### 2. Cable Internet access makes use of the cable television company’s existing cable television infrastructure. 
+> DSL Internet access can be obtained from the same local telephone company (telco) that provides its wired local phone access. Thus, when DSL is used, a customer’s telco is also its ISP.
+
+##### 2. Cable 
+
+> Cable Internet access makes use of the cable television company’s existing cable television infrastructure. 
 
 One important characteristic of cable Internet access is that it is a shared broadcast medium: 
 
@@ -72,21 +76,26 @@ FTTH distribution networks:
 
 * Direct fiber: one fiber leaving the central office for each home.
 * Shared fiber: one fiber leaving the central office for mutilple home.
-	Tow competing optical-distribution network architectures that perform this splitting:
 
-		1. **Active optical networks** (**AONs*)
-			(LINKTO Ethernet Chapter 5)
+Two competing optical-distribution network architectures that perform this splitting:
 
-		2. **Passive optical networks** (**PONs**)
-			* Each home has an optical network terminator (ONT) is connected by dedicated optical fiber to a neighborhood splitter.
-			* The splitter combines a number of homes into a single, shared optical fiber.
-			* The shared fiber connects to an optical line terminator (OLT) in the telco’s CO.
-			* The OLT connects to the Internet via a telco router.
+	1. **Active optical networks** (**AONs*)
+		(LINKTO Ethernet Chapter 5)
 
-##### 3. A **satellite** link can also be used to connect a residence to the Internet
+	2. **Passive optical networks** (**PONs**)
+		* Each home has an optical network terminator (ONT) is connected by dedicated optical fiber to a neighborhood splitter.
+		* The splitter combines a number of homes into a single, shared optical fiber.
+		* The shared fiber connects to an optical line terminator (OLT) in the telco’s CO.
+		* The OLT connects to the Internet via a telco router.
+
+##### 3. Satellite
+
+> A **satellite** link can also be used to connect a residence to the Internet
 at speeds of more than 1 Mbps.
 
-##### 4. **Dial-up access** over traditional phone lines is based on the same model as DSL—a home modem connects over a phone line to a modem in the ISP.
+##### 4. Dial-up access
+
+> **Dial-up access** over traditional phone lines is based on the same model as DSL—a home modem connects over a phone line to a modem in the ISP.
 
 #### Access in the Enterprise (and the Home): Ethernet and WiFi
 
@@ -99,10 +108,12 @@ Consider a bit traveling from one end system, this bit is transmitted from route
 Physical media fall into two categories:
 
 1. Guided media.
+
 	Waves are guided along a **solid** medium, such as a fiber-optic cable, a twisted-pair copper wire, or a coaxial cable
 
 2. Unguided media.
-	waves propagate in the atmosphere and in outer space, such as in a **wireless** LAN or a digital satellite channel.
+
+	Waves propagate in the atmosphere and in outer space, such as in a **wireless** LAN or a digital satellite channel.
 
 
 ## 1.3 The Network Core
@@ -205,8 +216,9 @@ A **points of presence** (**PoP**) is simply a group of one or more routers (at 
 
 ### 1.4.1 Overview of Delay in Packet-Switched Networks
 
-> **Total nodal delay** = **nodal processing delay** + **queuing delay** + **transmission
-delay** + **propagation delay**
+**Total nodal delay** formula:
+
+> **Total nodal delay** = **nodal processing delay** + **queuing delay** + **transmission delay** + **propagation delay**
 
 #### Processing Delay
 
@@ -229,7 +241,9 @@ Since our packet can be transmitted only after all the packets that have arrived
 > **Transmission delay** = **L**/**R**
 
 Which:
+
 **L**: packet length (bits)
+
 **R**: transmission rate(bits/sec)
 
 #### Propagation Delay
@@ -239,9 +253,258 @@ Which:
 > **Propagation delay** = **d**/**s**
 
 Which:
+
 **d**: distance (m)
+
 **s**: speed (m/sec)
 
 #### Comparing Transmission and Propagation Delay
 
 Remember that **transmission delay** does not dependent on physical distance between 2 routers, it based on amount data can be process at a time. On the other hand, **propagation delay** is based on physical length of the two routers.
+
+### 1.4.2 Queuing Delay and Packet Loss
+
+Queuing delay factors:
+
+* Traffic rate arrives at the queue.
+* The transmission rate of the link.
+* The nature of the arriving traffic
+	Whether the traffic arrives periodically or arrives in bursts.
+
+**Traffic intensity** formula:
+
+> **Traffic intensity** = **La**/**R**
+
+Which:
+
+**a**: The average rate at which packets arrive at the queue (packets/sec)
+
+**L**: packages length (bits).
+
+**R**: Tranmission rate.
+
+**Traffic intensity**:
+	
+	* **La**/**R** > 1:
+
+		- The average rate at which bits arrive at the queue exceeds the rate at which the bits can be transmitted from the queue.
+		- Delay is infinity.
+
+* **La**/**R** <= 1:
+	* Packets arrive periodically:
+
+		- If a packet arrives, it will be transmitted before another one arrives.
+		- So, very packet will arrive at an empty queue and there will be no queuing delay.
+
+	* Packets arrive in bursts but periodically:
+
+		- The first packet will be transmitted with no queueing delay, but the second one has L/R seconds delay, and the *n*th will have (n-1)*L/R seconds delay.
+		- A significant average queuing delay.
+
+	1. **La**/**R** close to 0:
+
+		* Queuing delay is close to 0.
+
+	2. **La**/**R** close to 1:
+
+		* Queuing delay is large.
+
+#### Packet Loss
+
+If a packet arrive and find out that the queue is full, with no place to store such a packet, the router will **drop** that packet and the packet will be **lost**.
+
+### 1.4.3 End-to-End Delay
+
+**End-to-End delay**: (assume that there is no queueing delay since it is more difficult to measure)
+
+> **End-to-End delay** = (**nodal processing delay** + **transmission delay** + **propagation delay**)*N
+
+Which:
+
+	**N**-1: the number of nodes between source and destination.
+
+### 1.4.4 Throughput in Computer Networks
+
+The **instantaneous throughput** at any instant of time is the rate (in bits/sec) at which a host is receiving the file.
+
+Think of bits as *fluid* and communication links as *pipes*. Clearly, the server cannot pump bits through its link at a rate faster than R*s* bps; and the router cannot forward bits at a rate faster than R*c* bps. If Rs < Rc, then the bits pumped by the server will “flow” right through the router and arrive at the client at a rate of R*s* bps, giving a **throughput** of R*s* bps and vice versa. This sittuation is called **bottleneck link**.
+
+**Throughput formula**:
+
+> **Throughput formula** = F/min{R*s*, R*c*}
+
+## 1.5 Protocol Layers and Their Service Models
+
+### 1.5.1 Layered Architecture
+
+#### Protocol Layering
+
+Network designers organize protocols — and the network hardware and software that implement the protocols— in **layers** and each protocol belongs to one of the layers.
+
+Each layer provides its service by:
+
+1. Performing certain actions within that layer, and by
+2. Using the services of the layer directly below it
+
+**Drawback of layering**:
+
+1. Duplicate lower-layer functionality.
+2. One layer may need information that is present only in another layer.
+
+
+| Application  |							| Application  |
+| Transport    |							| Presentation |
+| Network      |							| Session      |
+| Link         |							| Transport    |
+| Physical     |							| Network      | 
+											| Link         |
+											| Physical     |
+
+a.  Five-layer IPS 						b.  OSI reference model
+
+Internet protocol stack
+
+##### Internet protocol stack
+
+Five layer:
+* Application
+* Transport
+* Network
+* Link
+* Physical
+
+###### 1. Application Layer
+
+> **Application layer** is where network applications and their application-layer protocols reside.
+
+Application protocols:
+
+* HTTP: Web document request and transfer.
+* SMTP: e-mail messages transfer.
+* FTP: transfer of files between two end systems.
+
+**Message** is packet of information at the application layer.
+
+###### 2. Transport Layer
+
+> The Internet’s **transport layer** transports application-layer messages between application endpoints. 
+
+Transport protocols:
+
+* TCP: provides connection-oriented service to its applications
+
+	- Guarantee delivery 
+	- Provides flow control 
+	- Breaks long messages into shorter
+	- Provides a congestion-control mechanism
+
+* UDP: provides a connectionless service to its applications
+	
+	- No reliability
+	- No flow control
+	- No congestion control
+
+**Segment**: a transport-layer packet.
+
+###### 3. Network Layer
+
+> The Internet’s **network layer** (simply referred as ** IP layer**) is responsible for moving network-layer packets known as **datagrams** from one host to another. 
+
+Network protocols:
+
+* IP Protocol: 
+
+	- Defines the fields in the datagram as well as how the end systems and routers act on these fields.
+	- Only one IP Protocol
+
+* Routing protocols:
+
+	- Determine the routes that datagrams take between sources and destinations.
+	- Many routing protocols.
+
+###### 4. Link Layer
+
+> The network layer passes the datagram down to the **link layer**, which delivers the datagram to the next node along the route. 
+
+Link-layer protocols:
+
+	* Ethernet
+	* WiFi
+
+**Frames**: linklayer packets.
+
+###### 5. Physical Layer
+
+> Move individual bits from end to end
+
+##### The OSI Model
+
+Five layers are similar as above.
+
+###### 6. Presentation layer
+
+> **Presentation layer** provides services that allow communicating applications to interpret the meaning of data exchanged.
+
+Services:
+
+* Data compression
+* Data encryption
+
+###### 7. Session layer
+
+> **Session layer** provides for delimiting and synchronization of data exchange, including the means to build a checkpointing and recovery scheme.
+
+### 1.5.2 Encapsulation
+
+Routers and link-layer switches are both packet switches and they do not implement all of the layers in the protocol stack; they typically implement only the bottom layers. 
+
+* Link-layer switches implement layers 1 and 2
+* Routers implement layers 1 through 3.
+
+Routers are capable of implementing the IP protocol and links are not.
+
+![alt text](encapsulation.png "Package transmittion map")
+
+### 1.6 Networks Under Attack
+
+**Botnet**: compromised devices.
+
+**Self-replicating**: Once it infects one host, from that host it seeks entry into other hosts over the Internet, and from the newly infected hosts, it seeks entry into yet more hosts.
+
+#### Malware
+
+* **Viruses**: malware that require some form of user interaction to infect the user’s device (You have to actually run a application or click on a link that contains virus).
+* **Worms**: malware that can enter a device without any explicit user interaction.
+
+#### Server and network attacks
+
+> **Denial-of-service** (**DoS**) attacks.
+
+Most Internet DoS attacks fall into one of three categories:
+
+* **Vulnerability attack** 
+
+	This involves sending a few well-crafted messages to a vulnerable application or operating system running on a targeted host. If the right sequence of packets is sent to a vulnerable application or operating system, the service can stop or, worse, the host can crash
+
+* **Bandwidth flooding**
+
+	The attacker sends a deluge of packets to the targeted host—so many packets that the target’s access link becomes clogged, preventing legitimate packets from reaching the server.
+
+* **Connection flooding**
+
+	The attacker establishes a large number of half-open or fully open TCP connections (TCP connections are discussed in Chapter 3) at the target host. The host can become so bogged down with these bogus connections that it stops accepting legitimate connections.
+
+
+##### Bandwidth-flooding attacks
+
+If the server has an access rate of *R* bps, then the attacker will need to send traffic at a rate of approximately *R* bps to cause damage. If *R* is very large, a single attack source may not be able to generate enough traffic to harm the server. 
+
+In a **distributed DoS** (**DDoS**) attack the attacker controls multiple sources and has each source blast traffic at the target.
+
+#### Packet sniffer
+
+> A passive receiver that records a copy of every packet that flies by is called a **packet sniffer**.
+
+#### Attackers can masquerade as someone you trust
+
+> The ability to inject packets into the Internet with a false source address is known as **IP spoofing**.
