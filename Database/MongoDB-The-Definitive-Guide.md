@@ -2317,3 +2317,407 @@ If a primary does a write and goes down before the secondaries have a chance to 
 **Rollback** is used to undo ops that were not replicated before failover.
 
 TODO: come back
+
+# CHAPTER 11: Connecting to a Replica Set from Your Application
+
+### Client-to-Replica-Set Connection Behavior
+
+You don't have to list all replica members, when your application connect to a member, it will automatically dis cover other members. Connection might look like this `"mongodb://server-1:27017,server-2:27017"`.
+
+### Waiting for Replication on Writes
+
+In cases that the primary is down and a secondary will be eclected and start taking new writes. But when the former primary comes back up and finds out it has writes that the new primary doesn't have. To correct this, it will undo any writes that do not match the sequence of operations on the current primary. These operations are not lost, but they are written to special rollback files that have to be **manually** applied to the current primary.
+
+**Note**: MongoDB cannot automatically apply these writes, since they may conflict with other writes
+that have happened since the crash.
+
+To prevent this situation, you can set **write concern**:
+
+```
+    db.products.insert(
+       { item: "envelopes", qty : 100, type: "Clasp" },
+       { writeConcern: { w: 2, wtimeout: 5000 } }
+    )
+```
+**wtimeout** specifys a time limit to prevent write operations from blocking indefinitely.
+
+The above code make sure that the primary and a secondary have a copy of the new write. Therefore, even if the primary goes down, as long as the secondary is not down, the to be elected primary will have a copy of the new write.
+
+Or you can set `w: "majority"` in the mongo configuration, which means majority of replicas will have a copy of new write so that the problem above will not exist anymore.
+
+### Custom Replication Guarantees
+
+##### Guaranteeing One Server per Data Center
+
+One common technique for storing data is that you should store a local copy for each data center. Since failover between data centers are more common than within so that if each center have a local copy, your data is relatively safe.
+
+To set this up:
+
+1. Classify the members by data center by adding `tags` to the replica set configuration.
+
+```
+    > var config = rs.config()
+    > config.members[0].tags = {"dc" : "us-east"}
+    > config.members[1].tags = {"dc" : "us-east"}
+    > config.members[2].tags = {"dc" : "us-east"}
+    > config.members[3].tags = {"dc" : "us-east"}
+    > config.members[4].tags = {"dc" : "us-west"}
+    > config.members[5].tags = {"dc" : "us-west"}
+    > config.members[6].tags = {"dc" : "us-west"}
+```
+
+2. Add a rule by creating a "getLastErrorMode" field in our replica set config. 
+
+Rule form:
+
+```
+    "name" : {
+        "key" : number
+    }
+```
+
+Where:
+...**"name" **: the name of rule.
+...**"key" **: the key field from the tags.
+...**number**: the number groups that are needed to fulfil this rule. **number** also means "at least one server from each of **number** groups."
+
+Based on the previous example, the have a rule defined like:
+
+```
+    "eachDC" : {
+        "dc" : 2                               // One from us-east and another from us-west 
+    }
+```
+
+3. Reconfig the replica set.
+
+```
+    > config.settings = {}
+    > config.settings.getLastErrorModes = [{"eachDC" : {"dc" : 2}}]
+    > rs.reconfig(config)
+```
+
+Now we can use this rule for writes:
+
+```
+    > db.foo.insert({"x" : 1})
+    > db.runCommand({"getLastError" : 1, "w" : "eachDC", "wtimeout" : 1000})
+```
+
+### Sending Reads to Secondaries
+
+By default, drivers will route all requests to the primary. This is generally what you want, but you can configure other options by setting read preferences in your driver. Read preferences let you specify the types of servers queries should be sent to.
+
+##### Reasons NOT to Read from Secondaries
+
+###### Consistency Considerations
+
+1. Applications that require strongly consistent reads should not read from secondaries because secondaries might fall back far behind primary.
+
+2. If your application needs to read its own writes. Secondaries might not replicate the write yet.
+
+###### Load Considerations
+
+Many users send reads to secondaries to distribute load but it is dangerous when a member is down. Since a member is down, you might want to set a new member to handle your payload but a new member has to replicate other members. Hence all other members will be overwhelm and lag behind.
+
+##### Reasons to Read from Secondaries
+
+There are a few cases in which it’s reasonable to send application reads to secondaries:
+
+1. You may want your application to still be able to perform reads if the primary goes down (by setting ** Primary preferred**).
+2. Get low-latency reads by specifying **Nearest** which will route the request to the nearest server.
+
+    If your application needs to access the same document with low latency in multiple data centers, this is the only way to do it.
+
+    If, however, your documents are more location-based this should be done with sharding.
+
+**Secondary preferred** will send read requests to a secondary, if one is available. If no secondaries are available, requests will be sent to the primary.
+
+You read-only secondaries might also have a different set of indexes than write-only primary. This makes sense because indexes makes write slower and makes reads faster so that having different set of indexes for primary and secondaries makes reads and writes faster.
+
+### Chapter 12: Administration
+
+##### Starting Members in Standalone Mode
+
+A lot of maintenance tasks cannot be performed on secondaries (because they involve writes) and shouldn’t be performed on primaries so that we need a server in *standalone mode* for this sittuation.
+
+Start a server in standalone mode:
+
+```
+> db.serverCmdLineOpts()
+    {
+        "argv" : [ "mongod", "-f", "/var/lib/mongod.conf" ],
+        "parsed" : {
+        "replSet": "mySet",
+        "port": "27017",
+        "dbpath": "/var/lib/db"
+        },
+        "ok" : 1
+    }
+```
+
+To perform maintenance on this server we can restart it without the `replSet` option which will allow reads and writes as normal server.
+
+And start it as:
+
+```
+    $ mongod --port 30000 --dbpath /var/lib/db
+```
+
+The port must not be 27017 or other members will try to manipulate the new server.
+
+### Replica Set Configuration
+
+Configuration is always kept in a document in the *local.system.replset* collection.
+
+##### Creating a Replica Set
+
+Set configuration for to be member servers:
+
+```
+    > var config = {
+    ... "_id" : setName,
+    ... "members" : [
+    ... {"_id" : 0, "host" : host1},
+    ... {"_id" : 1, "host" : host2},
+    ... {"_id" : 2, "host" : host3}
+    ... ]}
+    > rs.initiate(config)
+```
+
+**Caution**: You should always pass a config object to `rs.initiate`. If you do not, MongoDB will attempt to automatically generate a config for a one-member replica set. It may not use the hostname that you want or correctly configure the set.
+
+You only need to call `rs.initiate` on one member of the set. The member that receives the initiate will pass the configuration on to the other members.
+
+##### Changing Set Members
+
+When you add a new set member, it should either:
+
+* Have nothing in its data directory.
+* Have a copy of the data from another member.
+
+Connect to the primary and add the new member:
+```
+    > rs.add("spock:27017")
+```
+
+Alternatively, you can specify a more complex member config as a document:
+```
+    > rs.add({"_id" : 5, "host" : "spock:27017", "priority" : 0, "hidden" : true})
+```
+You can also remove members by their "host" field:
+```
+    > rs.remove("spock:27017")
+```
+
+Restrictions in changing a member’s settings:
+
+* You cannot change a member’s `_id`.
+* You cannot make the member you’re sending the reconfig to (generally the primary) priority 0.
+* You cannot turn an arbiter into a nonarbiter and visa versa.
+* You cannot change a member with `"buildIndexes" : false` to `"buildIndexes" : true`.
+
+##### Creating Larger Sets
+
+**Note**: Replica sets are limited to 12 members and only 7 voting members.
+
+However, it can be too restrictive: (LINKTO MasterSlave) if you require more that 11 secondaries.
+
+If you are creating a replica set that has more than 7 members, every additional member must be given 0 votes.
+```
+    > rs.add({"_id" : 7, "host" : "server-7:27017", "votes" : 0})
+```
+
+**Caution**: Do not alter votes if you can possibly avoid it. Votes have weird, non-intuitive implications for elections and consistency guarantees.
+
+##### Forcing Reconfiguration
+
+When you permanently lose a majority of your set, which means that you will never have a primary elected, you might want to reconfigure the set without a primary by calling `forcing reconfig` on a secondary.
+```
+    > rs.reconfig(config, {"force" : true})
+```
+When the secondary receives the reconfig, it will update its configuration and pass the new config along to the other members.
+
+Forced reconfigurations bump the replica set `version` number by a large amount to prevent version number collisions.
+
+### Manipulating Member State 
+
+##### Turning Primaries into Secondaries
+
+```
+    > rs.stepDown()                     // stepdown for 60s, if no primary is elected, it will attempt a reelection
+
+    > rs.stepDown(600)                  // stepdown for 600s
+```
+
+And let it back by:
+
+```
+    > rs.freeze(0)
+```
+
+##### Preventing Elections
+
+If you need to do some maintenance on the primary but don’t want any of the other eligible members to become primary in the interim.
+
+```
+    > rs.freeze(10000)
+```
+
+And let them back by:
+
+```
+    > rs.freeze(0)
+```
+
+##### Using Maintenance Mode
+
+**Maintenance mode** occurs when you perform a long-running op on a replica set member: it forces the member into **RECOVERING** state.
+
+You might want to do this if a member begins to fall behind and you don’t want any read load on it.
+
+Scripts to check if a member is behind and then puts it in maintenance mode:
+
+```js
+    function maybeMaintenanceMode() {
+        var local = db.getSisterDB("local");
+
+        // Return if this member isn't a secondary (it might be a primary
+        // or already in recovering)
+        if (!local.isMaster().secondary) {
+            return;
+        }
+
+        // Find the last optime written on this member
+        var last = local.oplog.rs.find().sort({"$natural" : -1}).next();
+        var lastTime = last['ts']['t'];
+
+        // If more than 30 seconds behind
+        if (lastTime < (new Date()).getTime()-30) {
+            db.adminCommand({"replSetMaintenanceMode" : true});
+        }
+    };
+```
+
+To get out of maintenance mode, pass the command false:
+```
+    > db.adminCommand({"replSetMaintenanceMode" : false});
+```
+
+### Monitoring Replication
+
+##### Getting the Status
+
+`replSetGetStatus` command gets the current information about every member of the set.
+
+```
+> rs.status()
+
+// Will returns
+
+{
+    "set" : "spock",
+    "date" : ISODate("2012-10-17T18:17:52Z"),
+    "myState" : 2,
+    "syncingTo" : "server-1:27017",
+    "members" : [
+        {
+            "_id" : 0,
+            "name" : "server-1:27017",
+            "health" : 1,
+            "state" : 1,
+            "stateStr" : "PRIMARY",
+            "uptime" : 74824,
+            "optime" : { "t" : 1350496621000, "i" : 1 },
+            "optimeDate" : ISODate("2012-10-17T17:57:01Z"),
+            "lastHeartbeat" : ISODate("2012-10-17T17:57:00Z"),
+            "pingMs" : 3,
+        },
+        {
+            "_id" : 1,
+            "name" : "server-2:27017",
+            "health" : 1,
+            "state" : 2,
+            "stateStr" : "SECONDARY",
+            "uptime" : 161989,
+            "optime" : { "t" : 1350377549000, "i" : 500 },
+            "optimeDate" : ISODate("2012-10-17T17:57:00Z"),
+            "self" : true
+        },
+        {
+            "_id" : 2,
+            "name" : "server-3:27017",
+            "health" : 1,
+            "state" : 3,
+            "stateStr" : "RECOVERING",
+            "uptime" : 24300,
+            "optime" : { "t" : 1350411407000, "i" : 739 },
+            "optimeDate" : ISODate("2012-10-16T18:16:47Z"),
+            "lastHeartbeat" : ISODate("2012-10-17T17:57:01Z"),
+            "pingMs" : 12,
+            "errmsg" : "still syncing, not yet to minValid optime 507e9a30:851"
+        }
+    ],
+    "ok" : 1
+}
+```
+
+* **self**
+
+    This field is only present in the member rs.status() was run on, in this case, server-2.
+
+* **stateStr**
+
+    A string describing the state of the server (LINKTO Member States).
+
+* **uptime**
+    
+    The number of seconds a member has been reachable.
+
+* **optimeDate**
+
+    The last optime in each member’s oplog.
+
+* **lastHeartbeat**
+
+    The time this server last received a heartbeat from the member.
+
+* **pingMs**
+
+    The running average of how long heartbeats to this server have taken.
+
+* **errmsg**
+
+    Merely informational, not error messages
+
+
+##### Visualizing the Replication Graph
+
+MongoDB determines who to sync to based on ping time thus when it has to choose a member to sync from, it looks for the member that is closest to it and ahead of it in replication.
+
+Therefor, if you bring up a new member in a secondary data center, it is more likely to sync from the other members in that data center than a member in your primary data center.
+
+Check from where a member sync fom
+```
+    > server1.adminCommand({replSetGetStatus: 1})['syncingTo']
+    server0:27017
+```
+
+Force source server:
+```
+    > secondary.adminCommand({"replSetSyncFrom" : "server0:27017"})
+```
+
+##### Disabling Chaining
+
+Chaining is when a secondary syncs from another secondary (instead of the primary).
+
+By default, secondaries look for it closest member but you can disable chaining by:
+
+```
+    > var config = rs.config()
+    > // create the settings subobject, if it does not already exist
+    > config.settings = config.settings || {}
+    > config.settings.allowChaining = false
+    > rs.reconfig(config)
+```
