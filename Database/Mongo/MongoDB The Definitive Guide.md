@@ -1,27 +1,3 @@
-# Data types
-
-| Type                    | Number | Alias                 | Notes       |
-|-------------------------|--------|-----------------------|-------------|
-| Double                  | 1      | “double”              |             |
-| String                  | 2      | “string”              |             |
-| Object                  | 3      | “object”              |             |
-| Array                   | 4      | “array”               |             |
-| Binary data             | 5      | “binData”             |             |
-| Undefined               | 6      | “undefined”           | Deprecated. |
-| Object id               | 7      | “objectId”            |             |
-| Boolean                 | 8      | “bool”                |             |
-| Date                    | 9      | “date”                |             |
-| Null                    | 10     | “null”                |             |
-| Regular Expression      | 11     | “regex”               |             |
-| DBPointer               | 12     | “dbPointer”           |             |
-| JavaScript              | 13     | “javascript”          |             |
-| Symbol                  | 14     | “symbol”              |             |
-| JavaScript (with scope) | 15     | “javascriptWithScope” |             |
-| 32-bit integer          | 16     | “int”                 |             |
-| Timestamp               | 17     | “timestamp”           |             |
-| 64-bit integer          | 18     | “long”                |             |
-| Min key                 | -1     | “minKey”              |             |
-| Max key                 | 127    | “maxKey”              |             |
 
 # ObjectId format
 
@@ -901,9 +877,12 @@ Get indexes in a collection:
 
 **TIPS**: If you have the choice, creating indexes on existing documents is slightly faster than creating the index first and then inserting all documents.
 
-# Chapter 6: Special Index and Collection Types
+---
+## Part II: Design Your Apllication
 
-### Capped Collections
+### Chapter 6: Special Index and Collection Types
+
+#### Capped Collections
 
 Unilike "normal" collections which grow dynamically, **capped colection** is created in advance and is fixed in size. 
 
@@ -915,7 +894,7 @@ If we’re out of space, the oldest document will be deleted, and the new one wi
 
 **Tips**: Capped collections cannot be sharded.
 
-##### Creating Capped Collections
+#####Creating Capped Collections
 
 Capped Collections has `size` of 100000 bytes and `max` number of documents is 100.
 
@@ -930,7 +909,7 @@ Capped Collections has `size` of 100000 bytes and `max` number of documents is 1
 
 **Caution**: Once a capped collection has been created, it cannot be changed.
 
-##### Sorting Au Naturel
+#####Sorting Au Naturel
 
 Sort oldest to newest.
 
@@ -944,7 +923,7 @@ Sort newest to oldest.
     db.my_collection.find().sort({"$natural" : -1})
 ```
 
-##### Tailable Cursors
+#####Tailable Cursors
 
 **Tailable cursors**: a special type of cursor that are not closed when their results are exhausted. 
 
@@ -953,11 +932,11 @@ Tailable cursors:
 2. Will time out after 10 minutes of no results.
 3. *mongo* shell does not allow you to use tailable cursors.
 
-##### No-_id Collections
+#####No-_id Collections
 
 **Trap**: Do not create a collection with `_id`.
 
-### Time-To-Live Indexes (TTL)
+#### Time-To-Live Indexes (TTL)
 
 **TTL** indexes allow you to set a timeout for each document.
 
@@ -974,7 +953,7 @@ This creates a TTL index on the "lastUpdated" field. If a document’s "lastUpda
         })
 ```
 
-### Full-Text Indexes
+#### Full-Text Indexes
 
 Full-text indexes is used for indexing text in documents. They are particularly heavyweight.
 
@@ -986,11 +965,11 @@ Full-text indexes is used for indexing text in documents. They are particularly 
 
 TODO: read this section again.
 
-### Geospatial Indexing
+#### Geospatial Indexing
 
 TODO: read this section again.
 
-### Storing Files with GridFS
+#### Storing Files with GridFS
 
 **GridFS**:  a mechanism for storing large binary files in MongoDB.
 
@@ -1009,7 +988,7 @@ Downsides:
 
 **Tips**: GridFS is generally best when you have large files you’ll be accessing in a sequential fashion that won’t be changing much.
 
-##### mongofiles
+#####mongofiles
 
 Access GridFS with `mongofiles` cli.
 
@@ -1033,7 +1012,7 @@ Access GridFS with `mongofiles` cli.
     Hello, world
 ```
 
-##### Under the Hood
+#####Under the Hood
 
 * The basic idea behind GridFS is that we can store large files by splitting them up into chunks and storing each chunk as a separate document.
 * In addition to storing each chunk of a file, we store a single document that groups the chunks together and contains metadata about the file.
@@ -1068,9 +1047,9 @@ Keys that are mandated by the GridFS specification:
 
 **Tips**: Users can check the value of the "md5" key to ensure that a file was uploaded correctly.
 
-# Chapter 7: Aggregation
+### Chapter 7: Aggregation
 
-### The Aggregation Framework
+#### The Aggregation Framework
 
 The **aggregation framework** lets you transform and combine documents in a collection. Basically, you build a pipeline that processes a stream of documents through several building blocks: filtering, projecting, grouping, sorting, limiting, and skipping.
 
@@ -1113,9 +1092,9 @@ Detail:
 
 **Caution**: Aggregation results are limited to 16 MB of data
 
-### Pipeline Operations
+#### Pipeline Operations
 
-##### $match
+#####$match
 
 `$match` filters documents so that you can run an aggregation on a subset of documents.
 
@@ -1133,7 +1112,7 @@ Detail:
 
 **Tips**: Good practice is to put "$match" expressions as early as possible in the pipeline. It lightens workload by filtering unecessary documents.
 
-##### $project
+#####$project
 
 "$project" allows you to extract fields from subdocuments, rename fields, and perform interesting operations on them.
 
@@ -1160,7 +1139,7 @@ You can also rename the projected field. For example, you want to return the "_i
 
 The `$fieldname` syntax is used to refer to fieldname’s value in the aggregation framework.
 
-###### Pipeline expressions
+######Pipeline expressions
 
 **Mathematical expressions**: let you manipulate numeric values.
 
@@ -1305,7 +1284,7 @@ Suppose a professor wanted to generate grades using a somewhat complex calculati
     })
 ```
 
-##### $group
+#####$group
 
 Grouping allows you to group documents based on certain fields and combine their values. 
 
@@ -1385,7 +1364,7 @@ This will return
 **Note**:  with sharding, **$group** will first be run on each shard and then the individual shards’ groups will be sent to the
 mongos to do the final grouping and the remainder of the pipeline will be run on the mongos (not the shards).
 
-##### $unwind
+#####$unwind
 
 `$unwind` turns each field of an array into a separate document.
 
@@ -1448,7 +1427,7 @@ Notice that the original document has been splitted into two documents with the 
 
 **Tips**: Attempt to filter out as many documents (and as many fields from the documents) as possible at the beginning of your pipeline before hitting any `$project`, `$group`, or `$unwind` operations. This will reduce the workload for aggregation.
 
-### MapReduce
+#### MapReduce
 
 MapReduce:
 
@@ -1478,20 +1457,20 @@ MapReduce steps:
 
     The element from step 3 is returned to the shuffle step until each key has a list containing a single value.
 
-##### MongoDB and MapReduce
+#####MongoDB and MapReduce
 
 TODO: read this section again.
 
-### Aggregation Commands
+#### Aggregation Commands
 
-##### count
+#####count
 
 ```
     db.foo.count({"x" : 1})
 
 ```
 
-##### distinct
+#####distinct
 
 ```
     db.runCommand({"distinct" : "people", "key" : "age"})
@@ -1507,7 +1486,7 @@ Returns
     }
 ```
 
-##### group
+#####group
 
 You choose a key to group by, and MongoDB divides the collection into separate groups for each value of the chosen key. 
 
@@ -1562,7 +1541,7 @@ We want our results to be a list of the latest time and price for each day:
 
 **Note**: Some documentation refers to a "cond" or "q" key, both of which are identical to the "condition" key (just less descriptive).
 
-##### Using a finalizer
+#####Using a finalizer
 
 Finalizers can be used to minimize the amount of data that needs to be transferred from the database to the user, which is important because the `group` command’s output needs to fit in a single database response.
 
@@ -1570,93 +1549,93 @@ Example, we want to find the most popular tag for each day. We group by day (aga
 
 ```
 db.posts.group(
-	{
-		"key" : {"day" : true},
-		"initial" : {
-			"tags" : {}
-		},
-		"$reduce" : function(doc, prev) {
-			for (i in doc.tags) {
-				if (doc.tags[i] in prev.tags) {
-					prev.tags[doc.tags[i]]++;
-				} else {
-					prev.tags[doc.tags[i]] = 1;
-				}
-			}
-		}
-	})
+    {
+        "key" : {"day" : true},
+        "initial" : {
+            "tags" : {}
+        },
+        "$reduce" : function(doc, prev) {
+            for (i in doc.tags) {
+                if (doc.tags[i] in prev.tags) {
+                    prev.tags[doc.tags[i]]++;
+                } else {
+                    prev.tags[doc.tags[i]] = 1;
+                }
+            }
+        }
+    })
 ```
 
 That will return 
 
 ```
-	[
-		{"day" : "2010/01/12", "tags" : {"nosql" : 4, "winter" : 10, "sledding" : 2}},
-		{"day" : "2010/01/13", "tags" : {"soda" : 5, "php" : 2}},
-		{"day" : "2010/01/14", "tags" : {"python" : 6, "winter" : 4, "nosql": 15}}
-	]
+    [
+        {"day" : "2010/01/12", "tags" : {"nosql" : 4, "winter" : 10, "sledding" : 2}},
+        {"day" : "2010/01/13", "tags" : {"soda" : 5, "php" : 2}},
+        {"day" : "2010/01/14", "tags" : {"python" : 6, "winter" : 4, "nosql": 15}}
+    ]
 ```
 
 But this will return tag counts on everyday to the client which is extremely heavyload. We can use finalize to eliminate uneccessary items.
 
 ```
-	db.runCommand({
-		"group" : {
-			"ns" : "posts",
-			"key" : {"day" : true},
-			"initial" : {"tags" : {}},
-			"$reduce" : function(doc, prev) {
-				for (i in doc.tags) {
-					if (doc.tags[i] in prev.tags) {
-						prev.tags[doc.tags[i]]++;
-					} else {
-						prev.tags[doc.tags[i]] = 1;
-					}
-				}
-			},
-			"finalize" : function(prev) {
-				var mostPopular = 0;
-				for (i in prev.tags) {
-					if (prev.tags[i] > mostPopular) {
-						prev.tag = i;
-						mostPopular = prev.tags[i];
-					}
-				}
-				delete prev.tags
-			}
-		}
-	})
+    db.runCommand({
+        "group" : {
+            "ns" : "posts",
+            "key" : {"day" : true},
+            "initial" : {"tags" : {}},
+            "$reduce" : function(doc, prev) {
+                for (i in doc.tags) {
+                    if (doc.tags[i] in prev.tags) {
+                        prev.tags[doc.tags[i]]++;
+                    } else {
+                        prev.tags[doc.tags[i]] = 1;
+                    }
+                }
+            },
+            "finalize" : function(prev) {
+                var mostPopular = 0;
+                for (i in prev.tags) {
+                    if (prev.tags[i] > mostPopular) {
+                        prev.tag = i;
+                        mostPopular = prev.tags[i];
+                    }
+                }
+                delete prev.tags
+            }
+        }
+    })
 ```
 
 This will return a simpler result.
 
 ```
-	[
-		{"day" : "2010/01/12", "tag" : "winter"},
-		{"day" : "2010/01/13", "tag" : "soda"},
-		{"day" : "2010/01/14", "tag" : "nosql"}
-	]
+    [
+        {"day" : "2010/01/12", "tag" : "winter"},
+        {"day" : "2010/01/13", "tag" : "soda"},
+        {"day" : "2010/01/14", "tag" : "nosql"}
+    ]
 ```
 
-##### Using a function as a key
+#####Using a function as a key
 
 Example, query that is case-insensitive `MongoDB` and `mongodb`
 
 ```
-	db.posts.group({
-		"ns" : "posts",
-		"$keyf" : function(x) { 
-			return x.category.toLowerCase(); 
-		},
-		"initializer" : ... 
-	})
+    db.posts.group({
+        "ns" : "posts",
+        "$keyf" : function(x) { 
+            return x.category.toLowerCase(); 
+        },
+        "initializer" : ... 
+    })
 ```
 
 * `$keyf` (key function) allows you can group by arbitrarily complex criteria.
 
-# Chapter 8: Application Design
+### Chapter 8: Application Design
 
-### Normalization versus Denormalization
+#### Normalization versus Denormalization
 
 **Normalization** is dividing up data into multiple collections with references between collections.
 **Denormalization** is the opposite of normalization: embedding all of the data in a single document. 
@@ -1664,13 +1643,13 @@ Example, query that is case-insensitive `MongoDB` and `mongodb`
 **Note**: MongoDB has no joining facilities, so gathering documents from multiple collections will require multiple queries.
 **Note**: Typically, normalizing makes writes faster and denormalizing makes reads faster. 
 
-##### Examples of Data Representations
+#####Examples of Data Representations
 
 Example:
 
 Suppose we are storing information about students and the classes that they are taking. There are couple ways to store information.
 
-###### 1. Three collections
+######1. Three collections
  One way to represent this would be to have a **students** collection (each student is one document) and a **classes** collection (each class is one document). Then we could have a third collection (**studentClasses**) that contains references to the student and classes he is taking.
 
 If we wanted to find the classes a student was taking, we would query for the student in the **students** collection, query **studentClasses** for the course "_id"s, and then query the **classes** collection for the class information. Hence, it is **3** trips to he server.
@@ -1683,7 +1662,7 @@ Drawbacks:
 
 * Slow
 
-###### 2. Two collections
+######2. Two collections
 
 We can remove one of the dereferencing queries by embedding class references in the student's documents which gets rid of the **studentClasses** collection. In this case, we would query for the student in the **students** collection which will return class ids and then we query for those classes in **classes** collection. It only takes 2 queries.
 
@@ -1698,7 +1677,7 @@ Drawbacks:
 
 This is fairly popular way to structure data that does not need to be instantly accessible and changes, but not constantly.
 
-###### 3. One collections
+######3. One collections
 
 We can also embed documents in **classes** into **students** so that it only tooks one query.
 
@@ -1713,7 +1692,7 @@ Drawbacks:
 
 This is fairly popular way to structure data that does not need to be instantly accessible and changes, but not constantly.
 
-###### 4. Hybrid of embedding and referencing
+######4. Hybrid of embedding and referencing
 
 Create an array of subdocuments with the frequently used information, but with a reference to the actual document for more information
 
@@ -1736,7 +1715,7 @@ Benefits:
 | Data that you’ll often need to perform a second query to fetch | Data that you’ll often exclude from the results |
 | Fast reads                                                     | Fast writes                                     |
 
-### Cardinality
+#### Cardinality
 
 **Cardinality** is how many references a collection has to another collection. Common relationships are one-to-one, one-to-many, or many-to-many.
 
@@ -1747,7 +1726,7 @@ MongoDB, it can be conceptually useful to split *many* into subcategories: *many
 
 Generally, *few* relationships will work better with embedding, and *many* relationships will work better as references.
 
-##### Friends, Followers, and Other Inconveniences
+#####Friends, Followers, and Other Inconveniences
 
 > Keep your friends close and your enemies embedded.
 
@@ -1827,7 +1806,7 @@ This keeps your user documents svelte but takes an extra query to get the follow
 
 **Tips**: If you put this `subscriptions` collection in another database, you can also compact it without affecting the `users` collection too much.
 
-##### Dealing with the Wil Wheaton effect
+#####Dealing with the Wil Wheaton effect
 
 Regardless of which strategy you use, embedding only works with a limited number of subdocuments or references. 
 
@@ -1871,7 +1850,7 @@ The typical way of compensating this is to have a “continuation” document, i
 
 Then add application logic to support fetching the documents in the "to be continued" (`tbc`) array.
 
-### Optimizations for Data Manipulation
+#### Optimizations for Data Manipulation
 
 Optimizations:
 * Bottleneck is by evaluating its read and write performance.
@@ -1883,7 +1862,7 @@ Optimizations:
     * Minimizing the number of indexes you have.
     * Making updates as efficient as possible
 
-##### Optimizing for Document Growth
+#####Optimizing for Document Growth
 
 Factors:
 
@@ -1896,7 +1875,7 @@ If your documents have predictable size, manually padding by creating the docume
 
 **Tips**: If your document has one field that grows, try to keep is as the last field in the document (but before "garbage") so that MongoDb does not have to rewrite the growing field.
 
-##### Removing Old Data
+#####Removing Old Data
 
 Three popular options for removing old data:
 
@@ -1904,7 +1883,7 @@ Three popular options for removing old data:
 2. TTL collections. (LINKTO TTL collections)
 3. Dropping collections per time period.
 
-### Planning Out Databases and Collections
+#### Planning Out Databases and Collections
 
 **Tips**: If there are documents that need to be queried or aggregated together, those are good candidates for putting in one big collection.
 
@@ -1914,22 +1893,23 @@ For example, suppose we have an application with 3 components: a **logging** (a 
 
 Splitting these up by importance, we have 3 databases: **logs**, **activities**, and **users** and store those databases in proper dishes.
 
-### When Not to Use MongoDB
+#### When Not to Use MongoDB
 
 * MongoDB does not support transactions.
 * Joining many different types of data across many different dimensions.
 
+---
+## Part III: Replication
 
+### Chapter 9: Setting Up a Replica Set
 
-# CHAPTER 9: Setting Up a Replica Set
-
-### Introduction to Replication
+#### Introduction to Replication
 
 **Replication** is a way of keeping identical copies of your data on multiple servers and is recommended for all production deployments. Replication keeps your application runing and your data safe, even if something happens to one or more of your servers.
 
 With MongoDB, you set up replication by creating a replica set. A replica set is a group of servers with one primary, the server taking client requests, and multiple secondaries, servers that keep copies of the primary’s data. If the primary crashes, the secondaries can elect a new primary from amongst themselves. If the data on a server is damaged or inaccessible, you can make a new copy of the data from one the other members of the set.
 
-### A One-Minute Test Setup
+#### A One-Minute Test Setup
 
 **Note**: This quick-start method stores data in /data/db, so make sure that directory exists and is writable by your user before running this code.
 
@@ -2003,7 +1983,7 @@ To query from secondaries, you have to call `conn.setSlaveOk()`. Notice that sla
 * Clients cannot write to secondaries.
 * Clients, by default, cannot read from secondaries. By explicitly call `conn.setSlaveOk()`, clients can read from secondaries.
 
-### Configuring a Replica Set
+#### Configuring a Replica Set
 
 Start server 1 with `<name>` is your replica set name and `mongod.conf` is your config file.
 
@@ -2051,7 +2031,7 @@ However, at this time, each mongod does not yet know that the others exist so we
 
 **Caution**: You must use the mongo shell to configure replica sets. There is no way to do file-based replica set configuration.
 
-### Changing Your Replica Set Configuration
+#### Changing Your Replica Set Configuration
 
 Add a new replica member:
 
@@ -2116,7 +2096,7 @@ Change an existing server.
     > rs.reconfig(config)
 ```
 
-### How to Design a Set
+#### How to Design a Set
 
 > Replica sets are all about majorities: you need a majority of members to elect a primary, a primary can only stay primary so long as it can reach a majority, and a write is safe when it’s been replicated to a majority
 
@@ -2130,13 +2110,13 @@ Recommended configurations:
 * A majority of the set in one data center. 
 * An equal number of servers in each data center, plus a tie-breaking server in a third location. 
 
-##### How Elections Work
+#####How Elections Work
 
 If a member seeking election receives “ayes” from a majority of the set, it becomes primary. If even one server vetoes the election, the election is canceled. A member vetoes an election when it knows any reason that the member seeking election shouldn’t become primary.
 
-### Member Configuration Options
+#### Member Configuration Options
 
-##### Creating Election Arbiters
+#####Creating Election Arbiters
 
 **Arbiter** whose only purpose is to participate in elections. Arbiters hold no data and aren’t used by clients: they just provide a majority for two-member sets.
 
@@ -2155,7 +2135,7 @@ If a member seeking election receives “ayes” from a majority of the set, it 
 
 **Use at most one arbiter**: it takes longer to do an election and if you have an even number of nodes because you added an arbiter, your arbiters can cause ties.
 
-##### Priority
+#####Priority
 
 **Priority** is how strongly this member “wants” to become primary.
 
@@ -2179,7 +2159,7 @@ In this case, if all other members have default priority 1, `server-4` will be e
 
 **Note**: Reconfigurations must always be sent to a member that could be primary with the new configuration. (Not sure how it works, cannot set priority to 0???)
 
-##### Hidden
+#####Hidden
 
 Clients do not route requests to hidden members and hidden members are not preferred as replication sources (although they will be used if more desirable sources are not available).
 
@@ -2203,11 +2183,11 @@ A hidden member must have 0 priority. Hidden a member:
 
 **Note**: `rs.status()` and `rs.config()` will still show the member; it only disappears from `isMaster()`.
 
-##### Slave Delay
+#####Slave Delay
 (LINKTO Restoring from a Delayed Secondary)
 slaveDelay requires the member’s priority to be 0. If your application is routing reads to secondaries, you should make slave delayed members hidden so that reads are not routed to them.
 
-##### Building Indexes
+#####Building Indexes
 
 If you don't want a secondary to have the same indexes on the primary, you can turn it off by setting `"buildIndexes" : false` in the member’s configuration.
 
@@ -2215,15 +2195,15 @@ Required 0 priority.
 
 **Caution**: if you set `buildIndexes` to `false`, you can not reconfigure it to normal. You have to remove the member and reconnect it again.
 
-# Chapter 10: Components of a Replica Set
+### Chapter 10: Components of a Replica Set
 
-### Syncing
+#### Syncing
 
 Replication is concerned with keeping an identical copy of data on multiple servers  by keeping a log of operations, or oplog, containing every write that a primary performs. 
 
 Each secondary maintains its own **oplog**, recording each operation it replicates from the primary.
 
-##### Initial Sync
+#####Initial Sync
 
 When a member of the set starts up, it will check if it is in a valid state to begin syncing from someone. If not, it will attempt to make a full copy of data from another member of the set. This is call **initial sync**.
 
@@ -2246,7 +2226,7 @@ When a member of the set starts up, it will check if it is in a valid state to b
 
 **Caution**: Also, cloning can ruin the sync source’s working set.
 
-##### Handling Staleness
+#####Handling Staleness
 
 If a secondary falls too far behind the actual operations being performed on the sync source, the secondary will go **stale**. 
 A stale secondary:
@@ -2265,13 +2245,13 @@ Solution: (LINKTO  “Resizing the Oplog”)
 
 To avoid stale secondaries, it’s important to have a large oplog so that the primary can store a long history of operations. A larger oplog use more disk space but this is a good trade-off because the disk space tends to be cheap and little of the oplog is usually in use, and therefore it doesn’t take up much RAM.
 
-### Heartbeats
+#### Heartbeats
 
 A **heartbeat request** is a short message that checks everyone’s state.
 
 One of the most important functions of heartbeats is to let the primary know if it can reach a majority of the set.
 
-##### Member States
+#####Member States
 
 Members also communicate what state they are in via heartbeats.
 
@@ -2310,7 +2290,7 @@ Normal states for a member:
     Something uncorrectable has gone wrong and this member has given up trying to function normally. You should take a look at the log to figure out what has caused it to go into this state (grep for "replSet FATAL" to find the point where it went into the FATAL state). You generally will have to shut down the server and resync it or
     restore from backup once it’s in this state.
 
-##### Rollbacks
+#####Rollbacks
 
 If a primary does a write and goes down before the secondaries have a chance to replicate it, the next primary elected may not have the write. 
     
@@ -2318,13 +2298,13 @@ If a primary does a write and goes down before the secondaries have a chance to 
 
 TODO: come back
 
-# CHAPTER 11: Connecting to a Replica Set from Your Application
+### Chapter 11: Connecting to a Replica Set from Your Application
 
-### Client-to-Replica-Set Connection Behavior
+#### Client-to-Replica-Set Connection Behavior
 
 You don't have to list all replica members, when your application connect to a member, it will automatically dis cover other members. Connection might look like this `"mongodb://server-1:27017,server-2:27017"`.
 
-### Waiting for Replication on Writes
+#### Waiting for Replication on Writes
 
 In cases that the primary is down and a secondary will be eclected and start taking new writes. But when the former primary comes back up and finds out it has writes that the new primary doesn't have. To correct this, it will undo any writes that do not match the sequence of operations on the current primary. These operations are not lost, but they are written to special rollback files that have to be **manually** applied to the current primary.
 
@@ -2345,9 +2325,9 @@ The above code make sure that the primary and a secondary have a copy of the new
 
 Or you can set `w: "majority"` in the mongo configuration, which means majority of replicas will have a copy of new write so that the problem above will not exist anymore.
 
-### Custom Replication Guarantees
+#### Custom Replication Guarantees
 
-##### Guaranteeing One Server per Data Center
+#####Guaranteeing One Server per Data Center
 
 One common technique for storing data is that you should store a local copy for each data center. Since failover between data centers are more common than within so that if each center have a local copy, your data is relatively safe.
 
@@ -2404,23 +2384,23 @@ Now we can use this rule for writes:
     > db.runCommand({"getLastError" : 1, "w" : "eachDC", "wtimeout" : 1000})
 ```
 
-### Sending Reads to Secondaries
+#### Sending Reads to Secondaries
 
 By default, drivers will route all requests to the primary. This is generally what you want, but you can configure other options by setting read preferences in your driver. Read preferences let you specify the types of servers queries should be sent to.
 
-##### Reasons NOT to Read from Secondaries
+#####Reasons NOT to Read from Secondaries
 
-###### Consistency Considerations
+######Consistency Considerations
 
 1. Applications that require strongly consistent reads should not read from secondaries because secondaries might fall back far behind primary.
 
 2. If your application needs to read its own writes. Secondaries might not replicate the write yet.
 
-###### Load Considerations
+######Load Considerations
 
 Many users send reads to secondaries to distribute load but it is dangerous when a member is down. Since a member is down, you might want to set a new member to handle your payload but a new member has to replicate other members. Hence all other members will be overwhelm and lag behind.
 
-##### Reasons to Read from Secondaries
+#####Reasons to Read from Secondaries
 
 There are a few cases in which it’s reasonable to send application reads to secondaries:
 
@@ -2437,7 +2417,7 @@ You read-only secondaries might also have a different set of indexes than write-
 
 ### Chapter 12: Administration
 
-##### Starting Members in Standalone Mode
+#####Starting Members in Standalone Mode
 
 A lot of maintenance tasks cannot be performed on secondaries (because they involve writes) and shouldn’t be performed on primaries so that we need a server in *standalone mode* for this sittuation.
 
@@ -2466,11 +2446,11 @@ And start it as:
 
 The port must not be 27017 or other members will try to manipulate the new server.
 
-### Replica Set Configuration
+#### Replica Set Configuration
 
 Configuration is always kept in a document in the *local.system.replset* collection.
 
-##### Creating a Replica Set
+#####Creating a Replica Set
 
 Set configuration for to be member servers:
 
@@ -2489,7 +2469,7 @@ Set configuration for to be member servers:
 
 You only need to call `rs.initiate` on one member of the set. The member that receives the initiate will pass the configuration on to the other members.
 
-##### Changing Set Members
+#####Changing Set Members
 
 When you add a new set member, it should either:
 
@@ -2517,7 +2497,7 @@ Restrictions in changing a member’s settings:
 * You cannot turn an arbiter into a nonarbiter and visa versa.
 * You cannot change a member with `"buildIndexes" : false` to `"buildIndexes" : true`.
 
-##### Creating Larger Sets
+#####Creating Larger Sets
 
 **Note**: Replica sets are limited to 12 members and only 7 voting members.
 
@@ -2530,7 +2510,7 @@ If you are creating a replica set that has more than 7 members, every additional
 
 **Caution**: Do not alter votes if you can possibly avoid it. Votes have weird, non-intuitive implications for elections and consistency guarantees.
 
-##### Forcing Reconfiguration
+#####Forcing Reconfiguration
 
 When you permanently lose a majority of your set, which means that you will never have a primary elected, you might want to reconfigure the set without a primary by calling `forcing reconfig` on a secondary.
 ```
@@ -2540,9 +2520,9 @@ When the secondary receives the reconfig, it will update its configuration and p
 
 Forced reconfigurations bump the replica set `version` number by a large amount to prevent version number collisions.
 
-### Manipulating Member State 
+#### Manipulating Member State 
 
-##### Turning Primaries into Secondaries
+#####Turning Primaries into Secondaries
 
 ```
     > rs.stepDown()                     // stepdown for 60s, if no primary is elected, it will attempt a reelection
@@ -2556,7 +2536,7 @@ And let it back by:
     > rs.freeze(0)
 ```
 
-##### Preventing Elections
+#####Preventing Elections
 
 If you need to do some maintenance on the primary but don’t want any of the other eligible members to become primary in the interim.
 
@@ -2570,7 +2550,7 @@ And let them back by:
     > rs.freeze(0)
 ```
 
-##### Using Maintenance Mode
+#####Using Maintenance Mode
 
 **Maintenance mode** occurs when you perform a long-running op on a replica set member: it forces the member into **RECOVERING** state.
 
@@ -2604,9 +2584,9 @@ To get out of maintenance mode, pass the command false:
     > db.adminCommand({"replSetMaintenanceMode" : false});
 ```
 
-### Monitoring Replication
+#### Monitoring Replication
 
-##### Getting the Status
+#####Getting the Status
 
 `replSetGetStatus` command gets the current information about every member of the set.
 
@@ -2691,7 +2671,7 @@ To get out of maintenance mode, pass the command false:
     Merely informational, not error messages
 
 
-##### Visualizing the Replication Graph
+#####Visualizing the Replication Graph
 
 MongoDB determines who to sync to based on ping time thus when it has to choose a member to sync from, it looks for the member that is closest to it and ahead of it in replication.
 
@@ -2708,7 +2688,7 @@ Force source server:
     > secondary.adminCommand({"replSetSyncFrom" : "server0:27017"})
 ```
 
-##### Disabling Chaining
+#####Disabling Chaining
 
 Chaining is when a secondary syncs from another secondary (instead of the primary).
 
@@ -2722,7 +2702,7 @@ By default, secondaries look for it closest member but you can disable chaining 
     > rs.reconfig(config)
 ```
 
-##### Calculating Lag
+#####Calculating Lag
 
 **Lag** is how far behind a secondary is, which means the difference in timestamp between the last operation the primary has performed and the timestamp of the last operation the secondary has applied.
 
@@ -2760,7 +2740,7 @@ On sencondary:
 
 This shows who the slave is syncing from and the secondary is 12 seconds behind the primary.
 
-##### Resizing the Oplog:
+#####Resizing the Oplog:
 
 If your primary has an oplog that is an hour long, then you only have one hour to fix anything that goes wrong before your secondaries fall too far behind and must be resynced from scratch. Thus, you generally want to have an oplog that can hold a couple days to a week’s worth of data, to give yourself some breathing room if something goes wrong.
 
@@ -2808,11 +2788,11 @@ Increase the size of your oplog steps:
 
 **Tip**: You should not decrease the size of oplog because there is usually ample disk space for it and it does not use up any valuable resources like RAM or CPU.
 
-##### Restoring from a Delayed Secondary
+#####Restoring from a Delayed Secondary
 
 Suppose someone accidentally drops a database but, luckily, you had a delayed secondary. Now you need to get rid of the data on the other members and use the delayed slave as your definitive source of data. 
 
-###### The simplest way
+######The simplest way
 
 1. Shut down all the other members.
 2. Delete all the data in their data directories. Make sure every member (other than the delayed secondary) has an empty data directory.
@@ -2820,7 +2800,7 @@ Suppose someone accidentally drops a database but, luckily, you had a delayed se
 
 This is the easiest way but it might take times for other members to initial sync.
 
-###### The other option may or may not work better, depending on your amount of data:
+######The other option may or may not work better, depending on your amount of data:
 
 1. Shut down all the members, including the delayed secondary.
 2. Delete the data files from the non-delayed servers.
@@ -2829,7 +2809,7 @@ This is the easiest way but it might take times for other members to initial syn
 
 This means your database will down for a while and copying data also means oplog size will be copied to other server.
 
-##### Building Indexes
+#####Building Indexes
 
 When you apply an index to the primary, all secondaries will be notify and build it to. But building index is a resource intensive operation so your secondaries might be down while building. Therefore, you might not want all secondaries to build indexes add the same time.
 
@@ -2851,7 +2831,7 @@ The primary will replicate the index build to the secondaries, but they will alr
 
 You can have a secondary will a different set of indexes but make sure that it will never be a primary (priority 0) sinece if becomes primary, all other member will build indexes based on it.
 
-##### Replication on a Budget
+#####Replication on a Budget
 
 If it is difficult get more than one high-quality server, consider getting a secondary server that is only used for recovery. The good server will always be your primary and the cheaper server will never handle any client traffic.
 
@@ -2876,9 +2856,9 @@ Optons for cheaper one:
 
 # Part IV: Sharding
 
-# CHAPTER 13: Introduction to Sharding
+### Chapter 13: Introduction to Sharding
 
-### Introduction to Sharding
+#### Introduction to Sharding
 
 **Sharding** refers to the process of splitting data up across machines; the term **partitioning** is also sometimes used to describe this concept. This technique make it  becomes possible to store more data and handle more load without requiring larger or more powerful machines, just a larger quantity of less-powerful machines.
 
@@ -2887,13 +2867,13 @@ of which are completely independent.
 
 MongoDB automates balancing data across shards and makes it easier to add and remove capacity.
 
-### Understanding the Components of a Cluster
+#### Understanding the Components of a Cluster
 
 MongoDB’s sharding allows you to create a cluster of many machines and break up your collection across them, putting a subset of data on each shard. 
 
 **Note**: **Replication** creates an exact copy of your data on multiple servers, so every server is a mirror-image of every other server. Conversely, every **shard** contains a different subset of data.
 
-### A One-Minute Test Setup
+#### A One-Minute Test Setup
 
 1. Start mongo with `--nodb` option:
 ```
@@ -2908,7 +2888,7 @@ MongoDB’s sharding allows you to create a cluster of many machines and break u
 The `chunksize` option (LINKTO Chapter16).
 
 ![alt text](sharding.jpg "Sharding")
-![alt text](encapsulation.png "Replica" =100x20)
+![alt text](sharding1.png "Replica")
 
 Interacting with `mongos` works the same way as interacting with a standalone server does.
 
@@ -2950,6 +2930,101 @@ Now we’ll shard the collection by `username`:
 > sh.shardCollection("test.users", {"username" : 1})
 ```
 
-See (LINKTO chapter 15) for advice on choosing shard key.
+See (LINKTO Chapter 15) for advice on choosing shard key.
 
 Once you are finished experimenting, shut down the set and run `cluster.stop()` to clean up all servers.
+
+### Chapter 14: Configuring Sharding
+
+#### Starting the Servers
+
+Components of sharding:
+
+1. Mongos
+1. Shards
+1. Config servers
+    
+    Which store:
+        * Who the shards are
+        * What collections are sharded by
+        * The chunks
+
+##### Config Servers
+
+Config servers  hold all of the metadata about which servers hold what data, so they must be set up first and the data they hold is extremely important.
+
+The config servers must be started before any of the mongos processes, as mongos pulls its configuration from them. Config servers are standalone mongod processes so you can start them as a normal one:
+```
+    $ # server-config-1
+    $ mongod --configsvr --dbpath /var/lib/mongodb -f /var/lib/config/mongod.conf
+    $
+    $ # server-config-2
+    $ mongod --configsvr --dbpath /var/lib/mongodb -f /var/lib/config/mongod.conf
+```
+
+The `--configsvr` option indicates to the mongod that you are planning to use it as a config server.
+
+Config servers don’t use many resources, you can deploy config servers on machines running other things, like app servers, shard mongods, or mongos processes.
+
+**Tips**: Take frequent backups of config server data, if not, you will have to dig through your shards data to find which data is stored where. Always take a backup of your config servers before performing any cluster maintenance.
+
+##### The mongos Processes
+
+Once you have three config servers running, start a mongos process for your application to connect to. mongos processes need to know where the config servers are, so you must always start mongos with the `--configdb` option:
+```
+    $ mongos --configdb config-1:27019,config-2:27019,config-3:27019 \
+    > -f /var/lib/mongos.conf
+```
+
+You can have multiple mongos processes but each mongos must use **the exact same list of config servers, down to the order** in which they are listed.
+
+##### Adding a Shard from a Replica Set
+
+Two possibilities:
+
+* Add an existing replica set 
+* Start from scratch
+
+###### 1. Start from scratch:
+
+    Initialize an empty set and add it as an existing replica set.
+
+###### 2. Add an existing replica set :
+
+Convert them to shards
+
+```
+    > sh.addShard("spock/server-1:27017,server-2:27017,server-4:27017")
+    {
+        "added" : "spock/server-1:27017,server-2:27017,server-4:27017",
+        "ok" : true
+    }
+```
+
+You don't need to specify all member, MongoDb will automatically do that.
+
+**Caution**: Once you have added a shard, you must set up all clients to send requests to the mongos instead of contacting the replica set. Switch all clients to contacting the mongos immediately after adding the shard and set up a firewall rule to ensure that they are unable to connect directly to the shard.
+
+To add a single mongod as a shard simply specify the hostname of the standalone server in the call to addShard:
+
+    > sh.addShard("some-server:27017")
+
+##### Adding Capacity
+
+If your database growth bigger you can add a new empty shard by creating a replica set. Once it is initialized and has a primary, add it to your cluster by running the `addShard` command through mongos, specifying the new replica set’s name and its hosts as seeds.
+
+If you want to add more capacity, make sure replica sets do not have any database with the same name. Joining 3 sets with 2 databases each set means you have 3 shards with 6 databases.
+
+##### Sharding Data
+
+MongoDB won’t distribute your data automatically until you tell it how to do so. You must explicitly tell both the database and collection that you want them to be distributed.
+
+Suppose we want to shard the artists collection in the music database on the "name" key. First, we enable sharding for the database, music:
+    
+    > db.enableSharding("music")
+
+Then, you can shard a collection by running sh.shardCollection:
+
+    > sh.shardCollection("music.artists", {"name" : 1})
+
+Now the collection will be sharded by the "name" key.
