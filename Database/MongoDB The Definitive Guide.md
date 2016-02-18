@@ -2721,3 +2721,235 @@ By default, secondaries look for it closest member but you can disable chaining 
     > config.settings.allowChaining = false
     > rs.reconfig(config)
 ```
+
+##### Calculating Lag
+
+**Lag** is how far behind a secondary is, which means the difference in timestamp between the last operation the primary has performed and the timestamp of the last operation the secondary has applied.
+
+You can use `rs.status()` to see a member’s replication state.
+
+You also can get a quick summary (along with oplog size) by running `db.printReplicationInfo()` (on a primary) and `db.printSlaveReplicationInfo()` on a .
+
+On primary:
+
+```
+    > db.printReplicationInfo();
+
+    // Result
+    configured oplog size: 10.48576MB
+    log length start to end: 34secs (0.01hrs)
+    oplog first event time: Tue Mar 30 2010 16:42:57 GMT-0400 (EDT)
+    oplog last event time: Tue Mar 30 2010 16:43:31 GMT-0400 (EDT)
+    now: Tue Mar 30 2010 16:43:37 GMT-0400 (EDT)
+```
+
+In this example, the oplog is about 10 MB and is only able to fit about 30 seconds of operations.
+
+If this were a real deployment, the oplog should be much larger (see LINKTO “Resizing the Oplog” on page 220 for instructions on changing oplog size).
+
+On sencondary:
+
+```
+    > db.printSlaveReplicationInfo();
+
+    // Result
+    source: server-0:27017
+    syncedTo: Tue Mar 30 2012 16:44:01 GMT-0400 (EDT)
+    = 12secs ago (0hrs)
+```
+
+This shows who the slave is syncing from and the secondary is 12 seconds behind the primary.
+
+##### Resizing the Oplog:
+
+If your primary has an oplog that is an hour long, then you only have one hour to fix anything that goes wrong before your secondaries fall too far behind and must be resynced from scratch. Thus, you generally want to have an oplog that can hold a couple days to a week’s worth of data, to give yourself some breathing room if something goes wrong.
+
+You can't resize oplog while server is running so you have to go to each member, take it offline, resize it, and then add it back into the set.
+
+**Note**: Each server that could become a primary should have a large enough oplog to give you a sane maintenance window.
+
+Increase the size of your oplog steps:
+
+1. If this is currently the primary, step it down and wait for the other servers to catch up.
+2. Shut down the server.
+3. Start it up as a standalone server
+4. Temporarily store the last insert in the oplog in another collection:
+```
+    > use local
+    // op: "i" finds the last insert
+    > var cursor = db.oplog.rs.find({"op" : "i"})
+    > var lastInsert = cursor.sort({"$natural" : -1}).limit(1).next()
+    > db.tempLastOp.save(lastInsert)
+    >
+    // make sure it was saved! It's very important that you don't lose this op
+    > db.tempLastOp.findOne()
+```
+
+5. Drop the current oplog:
+```
+    > db.oplog.rs.drop()
+```
+
+6. Create a new oplog:
+```
+    > db.createCollection("oplog.rs", {"capped" : true, "size" : 10000})
+```
+
+7. Put the last op back in the oplog:
+```
+    > var temp = db.tempLastOp.findOne()
+    > db.oplog.rs.insert(temp)
+    >
+    > // make sure that this was actually inserted
+    > db.oplog.rs.findOne()
+```
+
+8. Finally, restart the server as a member of the replica set.
+
+**Tip**: You should not decrease the size of oplog because there is usually ample disk space for it and it does not use up any valuable resources like RAM or CPU.
+
+##### Restoring from a Delayed Secondary
+
+Suppose someone accidentally drops a database but, luckily, you had a delayed secondary. Now you need to get rid of the data on the other members and use the delayed slave as your definitive source of data. 
+
+###### The simplest way
+
+1. Shut down all the other members.
+2. Delete all the data in their data directories. Make sure every member (other than the delayed secondary) has an empty data directory.
+3. Restart all the members. They will begin making a copy of the delayed secondary’s data.
+
+This is the easiest way but it might take times for other members to initial sync.
+
+###### The other option may or may not work better, depending on your amount of data:
+
+1. Shut down all the members, including the delayed secondary.
+2. Delete the data files from the non-delayed servers.
+3. Copy the delayed secondary’s data files to the other servers.
+4. Start up everyone.
+
+This means your database will down for a while and copying data also means oplog size will be copied to other server.
+
+##### Building Indexes
+
+When you apply an index to the primary, all secondaries will be notify and build it to. But building index is a resource intensive operation so your secondaries might be down while building. Therefore, you might not want all secondaries to build indexes add the same time.
+
+Therefore, you may want to build an index on one member at a time to minimize impact on your application. To accomplish this, do the following:
+
+1. Shut down a secondary.
+2. Restart it as a standalone server.
+3. Build the index on the standalone server.
+4. When the index build is complete, restart the server as a member of the replica set.
+5. Repeat steps 1 through 4 for each secondary in the replica set.
+
+Then, all secondaries will have the same new indexes, but not the primary. Now there are two options, and you should choose the one that will impact your production system the least:
+
+1. Build the index on the primary. If you have an “off ” time when you have less traffic, that would probably be a good time to build it. You also might want to modify read preferences to temporarily shunt more load onto secondaries while the build is in progress.
+
+The primary will replicate the index build to the secondaries, but they will already have the index so it will be a no-op for them.
+
+2. Step down the primary, then follow steps 1 through 4 as outlined earlier. This requires a failover, but you will have a normally-functioning primary while the old primary is building its index. After its index build is complete, you can reintroduce it to the set.
+
+You can have a secondary will a different set of indexes but make sure that it will never be a primary (priority 0) sinece if becomes primary, all other member will build indexes based on it.
+
+##### Replication on a Budget
+
+If it is difficult get more than one high-quality server, consider getting a secondary server that is only used for recovery. The good server will always be your primary and the cheaper server will never handle any client traffic.
+
+Optons for cheaper one:
+
+* `"priority" : 0`
+
+    You do not want this server to ever become primary.
+
+* `"hidden" : true`
+
+    You do not want clients ever sending reads to this secondary.
+
+* `"buildIndexes" : false`
+
+    This is optional, but it can decrease the load this server has to handle considerably. If you ever need to restore from this server, you’ll need to rebuild indexes.
+
+* `"votes" : 0`
+
+    If you only have two machines, set the votes on this secondary to 0 so that the primary can stay primary if this machine goes down. If you have a third server (even just your application server), run an arbiter on that instead of setting votes to 0.
+
+
+# Part IV: Sharding
+
+# CHAPTER 13: Introduction to Sharding
+
+### Introduction to Sharding
+
+**Sharding** refers to the process of splitting data up across machines; the term **partitioning** is also sometimes used to describe this concept. This technique make it  becomes possible to store more data and handle more load without requiring larger or more powerful machines, just a larger quantity of less-powerful machines.
+
+**Manual sharding** is when an application maintains connections to several different database servers, each
+of which are completely independent.
+
+MongoDB automates balancing data across shards and makes it easier to add and remove capacity.
+
+### Understanding the Components of a Cluster
+
+MongoDB’s sharding allows you to create a cluster of many machines and break up your collection across them, putting a subset of data on each shard. 
+
+**Note**: **Replication** creates an exact copy of your data on multiple servers, so every server is a mirror-image of every other server. Conversely, every **shard** contains a different subset of data.
+
+### A One-Minute Test Setup
+
+1. Start mongo with `--nodb` option:
+```
+    $ mongo --nodb
+```
+
+2. To create a cluster, use the ShardingTest class:
+```
+    > cluster = new ShardingTest({"shards" : 3, "chunksize" : 1})
+```
+
+The `chunksize` option (LINKTO Chapter16).
+
+![alt text](sharding.jpg "Sharding")
+![alt text](encapsulation.png "Replica" =100x20)
+
+Interacting with `mongos` works the same way as interacting with a standalone server does.
+
+You can get an overall view of your cluster by running `sh.status()`:
+```
+    > sh.status()
+
+    // Result
+    --- Sharding Status ---
+        sharding version: { "_id" : 1, "version" : 3 }
+        shards:
+        { "_id" : "shard0000", "host" : "localhost:30000" }
+        { "_id" : "shard0001", "host" : "localhost:30001" }
+        { "_id" : "shard0002", "host" : "localhost:30002" }
+        databases:
+        { "_id" : "admin", "partitioned" : false, "primary" : "config" }
+        { "_id" : "test", "partitioned" : false, "primary" : "shard0001" }
+```
+
+As we can see, we have three shards and two databases (admin is created automatically).
+
+**Note**: A primary shard is different than a replica set primary. A primary shard refers to the entire replica set composing a shard. A primary in a replica set is the single server in the set that can take writes.
+
+To shard a particular collection, first enable sharding on the collection’s database.
+```
+    > sh.enableSharding("test")
+```
+
+Now sharding is enabled on the `test` database, which allows you to shard collections within the database.
+
+When you shard a collection, you choose a **shard key**. This is a field or two that MongoDB uses to break up data. Choosing a shard key can be thought of as choosing an ordering for the data in the collection and the shard key becomes the most important index on your collection as it gets bigger.
+
+Before enabling sharding, we have to create an index on the key we want to shard by:
+```
+    > db.users.ensureIndex({"username" : 1})
+```
+Now we’ll shard the collection by `username`:
+```
+> sh.shardCollection("test.users", {"username" : 1})
+```
+
+See (LINKTO chapter 15) for advice on choosing shard key.
+
+Once you are finished experimenting, shut down the set and run `cluster.stop()` to clean up all servers.
