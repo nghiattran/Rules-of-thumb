@@ -3028,3 +3028,30 @@ Then, you can shard a collection by running sh.shardCollection:
     > sh.shardCollection("music.artists", {"name" : 1})
 
 Now the collection will be sharded by the "name" key.
+
+#### How MongoDB Tracks Cluster Data
+
+MongoDB groups documents into **chunks**, which are documents in a given range of the shard key. A chunk always lives on a single shard, so MongoDB can keep a small table of chunks mapped to shards.
+
+As writes occur, the number and size of the documents in a chunk might change.  Thus, once a chunk grows to a certain size, MongoDB automatically splits it into two smaller chunks. 
+
+A document always belongs to one and only one chunk so that that you cannot use an array field as your shard key, since MongoDB creates multiple index entries for arrays. 
+
+Chunk information is stored in the `config.chunks` collection.
+
+###### How Mongo handle split
+
+`mongos` has a split threshold and if the threshold is reached, it will send request to other shards asking for a split. Shards will calculate their chunk and reply back to `mongos`. If a shard accepts the split, `mongos` will send metadata to config server to indicate where to find data. But if the config server is down, the split process fails, too. And since the threshold has been reached, every new write will trigger split and the config server is down so it will continue forever.
+
+The process of mongos repeatedly attempting to split a chunk and being unable to is called a **split storm**. The only way to prevent split storms is to ensure that your config servers are up and healthy as much of the time as possible. You can also restart a mongos to reset its write counter.
+
+##### The Balancer
+
+The `balancer` is responsible for migrating data. It regularly checks for imbalances between shards and, if it finds an imbalance, will begin migrating chunks. 
+
+Every few seconds, a mongos will attempt to become the balancer. If there are no other balancers active, the mongos will take a cluster-wide lock from the config servers and do a balancing round.
+
+The `config.locks` collection keeps track of all cluster-wide locks. 
+
+Once a mongos has become the balancer, it checks its table of chunks for each collection to see if any shards have hit the **balancing threshold** meaning that a shard has significantly more chunks than the other shards. If an imbalance is detected, the balancer will redistribute chunks until all shards are within one chunk of one another.
+
