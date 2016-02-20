@@ -79,14 +79,14 @@ FTTH distribution networks:
 
 Two competing optical-distribution network architectures that perform this splitting:
 
-	1. **Active optical networks** (**AONs*)
-		(LINKTO Ethernet Chapter 5)
+1. **Active optical networks** (**AONs*)
+	(LINKTO Ethernet Chapter 5)
 
-	2. **Passive optical networks** (**PONs**)
-		* Each home has an optical network terminator (ONT) is connected by dedicated optical fiber to a neighborhood splitter.
-		* The splitter combines a number of homes into a single, shared optical fiber.
-		* The shared fiber connects to an optical line terminator (OLT) in the telco’s CO.
-		* The OLT connects to the Internet via a telco router.
+2. **Passive optical networks** (**PONs**)
+	* Each home has an optical network terminator (ONT) is connected by dedicated optical fiber to a neighborhood splitter.
+	* The splitter combines a number of homes into a single, shared optical fiber.
+	* The shared fiber connects to an optical line terminator (OLT) in the telco’s CO.
+	* The OLT connects to the Internet via a telco router.
 
 ##### 3. Satellite
 
@@ -285,10 +285,10 @@ Which:
 
 **Traffic intensity**:
 	
-	* **La**/**R** > 1:
+* **La**/**R** > 1:
 
-		- The average rate at which bits arrive at the queue exceeds the rate at which the bits can be transmitted from the queue.
-		- Delay is infinity.
+	- The average rate at which bits arrive at the queue exceeds the rate at which the bits can be transmitted from the queue.
+	- Delay is infinity.
 
 * **La**/**R** <= 1:
 	* Packets arrive periodically:
@@ -508,3 +508,459 @@ In a **distributed DoS** (**DDoS**) attack the attacker controls multiple source
 #### Attackers can masquerade as someone you trust
 
 > The ability to inject packets into the Internet with a false source address is known as **IP spoofing**.
+
+
+# Chapter 2: Application layer
+
+## 2.1 Principles of Network Applications
+
+The core of network application development is writing programs that run on different end systems and communicate with each other over the network. Thus, when developing your new application, you need to write software that will run on multiple end systems.
+
+### 2.1.1 Network Application Architectures
+
+Two predominant architectural paradigms in modern network applications:
+
+1. The client-server architecture.
+1. The peer-to-peer (P2P) architecture.
+
+In a **client-server architecture**, there is an always-on host, called the **server**, which services requests from many other hosts, called **clients**. With the client-server architecture, clients do not directly communicate with each other but instead through the server. Another characteristic of the client-server architecture is that the server has a fixed, well-known address, called an IP address because the server is always on so that a client can always contact the server by sending a packet to the server’s IP address.
+
+Often in a client-server application, a single-server host is incapable of keeping up with all the requests from clients. Fot that reason, a **data center**, housing a large number of hosts, is often used to create a powerful virtual server.
+
+In a **P2P** architecture, there is minimal (or no) reliance on dedicated servers in data centers. Instead the application exploits direct communication between pairs of intermittently connected hosts, called peers
+
+One of the most compelling features of P2P architectures is their **self-scalability** because each new user will automatically add the capacity of the network. P2P architectures are also cost effective, since they normally don’t require significant server infrastructure and server bandwidth.
+
+Three major challenges of P2P:
+
+* ISP Friendly: P2P network put a significant stress on residential ISP by using upstream traffic which is designed for more downstream traffic.
+
+* Security: Because of their highly distributed and open nature, P2P applications can be a challenge to secure.
+
+* Incentives: The success of future P2P applications also depends on convincing users to volunteer bandwidth, storage, and computation resources.
+
+### 2.1.2 Processes Communicating
+
+#### The Interface Between the Process and the Computer Network
+
+As noted above, most applications consist of pairs of communicating processes, with the two processes in each pair sending messages to each other. Any message sent from one process to another must go through the underlying network. A process sends messages into, and receives messages from, the network through a software interface called a **socket**. 
+
+A process is analogous to a house and its socket is analogous to its door.
+
+The only control that the application developer has on the transport-layer side is:
+
+1. The choice of transport protocol and 
+2. The ability to fix a few transport-layer parameters such as maximum buffer and maximum segment sizes.
+
+#### Addressing Processes
+
+To identify the receiving process, two pieces of information need to be specified:
+
+1. The address of the host and 
+2. An identifier that specifies the receiving process in the destination host.
+
+In the Internet, the host is identified by its **IP address**. The sending process must also identify the receiving process running in the host, **port number**.
+
+### 2.1.3 Transport Services Available to Applications
+
+#### 1. Reliable Data Transfer
+
+A protocol provides a guaranteed data delivery service, it is said to provide **reliable data transfer**. One important service that a transport-layer protocol can potentially provide to an application is process-to-process reliable data transfer.
+
+When a transport protocol provides this service, the sending process can just pass its data into the socket and know with complete confidence that the data will arrive without errors at the receiving process.
+
+When a transport-layer protocol doesn’t provide reliable data transfer, some of the data sent by the sending process may never arrive at the receiving process. This may be acceptable for **loss-tolerant applications**. For example in multimedia application, some amount of data loss only results a small glitch.
+
+#### 1. Throughput
+
+Because other sessions will be sharing the bandwidth along the network path, and because these other sessions will be coming and going, the available throughput can fluctuate with time. 
+
+Another natural service that a transport-layer protocol could provide, namely, guaranteed available throughput at some specified rate. Applications that have throughput requirements are said to be **bandwidth-sensitive** applications.
+
+While bandwidth-sensitive applications have specific throughput requirements, **elastic applications** can make use of as much, or as little, throughput as happens to be available.
+
+#### 1. Timing
+
+A transport-layer protocol can also provide timing guarantees. 
+
+#### 1. Security
+
+A transport protocol can provide an application with one or more security services like encryption.
+
+### 2.1.4 Transport Services Provided by the Internet
+
+The Internet makes two transport protocols available to applications: **UDP** and **TCP**. When you (as an application developer) create a new network application for the Internet, one of the first decisions you have to make is whether to use UDP or TCP.
+
+#### TCP Services
+
+The **TCP** service model includes:
+
+1. Connection-oriented service:
+	
+	* TCP has the client and server exchange transport-layer control information with each other before the application-level messages begin to flow. This is called handshaking procedure alerts the client and server.
+
+	* Then, a **TCP connection** is said to exist between the sockets of the two processes. The connection is a full-duplex connection.
+
+	* When the application finishes sending messages, it must tear down the connection.
+
+2. Reliable data transfer service:
+
+	The communicating processes can rely on TCP to deliver all data sent without error and in the proper order. 
+
+TCP also includes a **congestion-control** mechanism which throttles a sending process (client or server) when the network is congested between sender and receiver. Congestion-control also ensures that everyone across a network has a "fair" amount of access to network resources, at any given time.
+
+TCP also provides **flow control** which ensures that the sender send data at a rate that the receiver can handle. For example, the sender uses fiber cable but the receiver uses DSL, without flow control, the sender will send data so too fast for the receiver to handle. Flow control will make sure that the sender send at a rate that it can be received.
+
+#### UDP Services
+
+**UDP** is a no-frills, lightweight transport protocol, providing minimal services. It is connectionless, so there is no handshaking before the two processes start to communicate. UDP provides an unreliable data transfer service and message received may arrive out of order.
+
+UDP does not include a congestion-control mechanism or flow control.
+
+#### Services Not Provided by Internet Transport Protocols
+
+TCP and UDP do not provide security but TCP can use SSL to enhance security.
+
+Today’s Internet transport protocols do not provide timing and throughput (LINKTO 2.1.3). 
+
+In summary, today’s Internet can often provide satisfactory service to time-sensitive applications, but it cannot provide any timing or throughput guarantees.
+
+### 2.1.5 Application-Layer Protocols
+
+An **application-layer protocol** defines how an application’s processes, running on different end systems, pass messages to each other.
+
+An application-layer protocol defines:
+
+* The types of messages exchanged, for example, request messages and response messages
+* The syntax of the various message types, such as the fields in the message and how the fields are delineated
+* The semantics of the fields, that is, the meaning of the information in the fields
+* Rules for determining when and how a process sends messages and responds to messages
+
+It is important to distinguish between network applications and application-layer protocols. An application-layer protocol is only one piece of a network application.
+
+### 2.1.6 Network Applications Covered in This Book
+
+Five important applications:
+
+1. The Web
+1. File transfer
+1. Electronic mail
+1. Directory service
+1. P2P applications
+
+## 2.2 The Web and HTTP
+
+### 2.2.1 Overview of HTTP
+
+The **HyperText Transfer Protocol (HTTP)** is implemented in two programs: a client program and a server program. The client program and server program, executing on different end systems, talk to each other by exchanging HTTP messages. HTTP defines the structure of these messages and how the client and server exchange the messages.
+
+A **Web page** (also called a document) consists of objects. An object is simply a file—such as an HTML file, a JPEG image, a Java applet, or a video clip—that is addressable by a single URL. 
+
+When a user requests a Web page (for example, clicks on a hyperlink), the browser sends HTTP request messages for the objects in the page to the server. The server receives the requests and responds with HTTP response messages that contain the objects.
+
+HTTP uses TCP as its underlying transport protocol:
+
+It is important to note that the server sends requested files to clients without storing any state information about the client. If a particular client asks for the same object twice in a period of a few seconds, the server does not respond by saying that it just served the object to the client; instead, the server resends the object, as it has completely forgotten what it did earlier. Because an HTTP server maintains no information about the clients, HTTP is said to be a **stateless protocol**.
+
+#### 2.2.2 Non-Persistent and Persistent Connections
+
+Two type of HTTP connections:
+
+**Non-persistent connections**: each request/response pair be sent over a separate TCP connection.
+**Persistent connections**:  all of the requests and their corresponding responses be sent over the same TCP connection
+
+HTTP uses persistent connections in its default mode, but HTTP clients and servers can be configured to use non-persistent connections instead.
+
+##### HTTP with Non-Persistent Connections
+
+Suppose you want to get a web page, example.com/page.html, that has 10 images. Therefore, in total there are 11 objects on the server.
+
+What happens:
+
+1. The HTTP client process initiates a TCP connection to the server on port 80 to get to server socket.
+2. The HTTP client sends an HTTP request message to the server via its socket.
+3. The HTTP server process receives the request message via its socket, retrieves `page.html` and sends the response message to the client via its socket.
+4. The HTTP server process tells TCP to close the TCP connection.
+5. The HTTP client receives the response message and find out that it needs 10 objects for images. So it repeat from step 1 to 4 for 10 more times.
+
+Users can configure modern browsers to control the degree of parallelism. In their default modes, most browsers open 5 to 10 parallel TCP connections, and each of these connections handles one request-response transaction.
+
+The **round-trip time (RTT)**, which is the time it takes for a small packet to travel from client to server and then back to the client including packet-propagation delays, packet delays.
+
+For non-persistent connections, time to get the whole page is:
+
+	T = 2 * (1 + objects/parallel) * RTT
+
+**Note**: request for base html can not be parallel because it only knows the number of objects in the html file after recieving and scanning the file.
+
+2: 1 for handshaking and 1 for actual request
+
+1: base html file
+
+##### HTTP with Persistent Connections
+
+Non-persistent connections have some shortcomings:
+
+1. A brand-new connection must be established and maintained for each requested object which creates TCP buffers on both client and server => memory problem
+
+2. Each object suffers a delivery delay of two RTTs
+
+With **persistent connections**, the server leaves the TCP connection open after sending a response so subsequent requests and responses between the same client and server can be sent over the same connection.
+
+For persistent connections, time to get the whole page is:
+
+	T = (1 + 1 + objects) * RTT
+
+First 1: for handshaking
+Second 1: for getting base html file
+
+#### 2.2.3 HTTP Message Format
+
+##### HTTP Request Message
+
+Typical request message:
+
+```
+GET /somedir/page.html HTTP/1.1
+Host: www.someschool.edu
+Connection: close
+User-agent: Mozilla/5.0
+Accept-language: fr
+```
+
+The first line of an HTTP request message is called the **request line** the subsequent lines are called the **header lines**
+
+The request line, `GET /somedir/page.html HTTP/1.1` has three fields: 
+
+* The method field
+	
+	This field can be:  GET, POST, HEAD, PUT, or DELETE
+
+* The URL field, and 
+* The HTTP version field
+
+`Connection: close` header line, the browser is telling the server that it doesn’t want to bother with persistent connections; it wants the server to close the connection after sending the requested object.
+
+`User-agent: Mozilla/5.0` indicates browser that the request is sent from so that the server can serve with a proper version of the object
+
+`Accept-language: fr` indicates that the user prefers to receive a French version of the object, if such an object exists on the server; otherwise, the server should send its default version.
+
+##### HTTP Response Message
+
+```
+HTTP/1.1 200 OK
+Connection: close
+Date: Tue, 09 Aug 2011 15:44:04 GMT
+Server: Apache/2.2.3 (CentOS)
+Last-Modified: Tue, 09 Aug 2011 15:11:03 GMT
+Content-Length: 6821
+Content-Type: text/html
+(data data data data data ...)
+```
+
+It has three sections: an initial status line, six header lines, and then the entity body.
+
+#### 2.2.4 User-Server Interaction: Cookies
+
+It is often desirable for a Web site to identify users, either because the server wishes to restrict user access or because it wants to serve content as a function of the user identity so it uses **cookies** for this purpose. 
+
+Cookie technology has four components:
+
+1. A cookie header line in the HTTP response message
+2. A cookie header line in the HTTP request message
+3. A cookie file kept on the user’s end system and managed by the user’s browser; and 
+4. A back-end database at the Web site. 
+
+Although cookies often simplify the Internet shopping experience for the user, they are controversial because they can also be considered as an invasion of privacy. As we just saw, using a combination of cookies and user-supplied account information, a Web site can learn a lot about a user and potentially sell this information to a third party.
+
+#### 2.2.5 Web Caching
+
+A **Web cache**—also called a **proxy server**—is a network entity that satisfies HTTP requests on the behalf of an origin Web server. The Web cache has its own disk storage and keeps copies of recently requested objects in this storage. A user’s browser can be configured so that all of the user’s HTTP requests are first directed to the Web cache. Once a browser is configured, each browser request for an object is first directed to the Web cache.
+
+Example:
+
+1. The browser establishes a TCP connection to the Web cache and sends an HTTP request for the object to the Web cache.
+2. The Web cache checks to see if it has a copy of the object stored locally. If it does, the Web cache returns the object within an HTTP response message to the client browser.
+3. If the Web cache does not have the object, the Web cache opens a TCP connection to the origin server, that is, to www.someschool.edu. The Web cache then sends an HTTP request for the object into the cache-to-server TCP connection. After receiving this request, the origin server sends the object within
+an HTTP response to the Web cache.
+4. When the Web cache receives the object, it stores a copy in its local storage and sends a copy, within an HTTP response message, to the client browser (over the existing TCP connection between the client browser and the Web cache).
+
+A cache is both a server and a client at the same time
+
+Web caching has seen deployment in the Internet for two reasons:
+
+1. The Web cache can substantially reduce the response time for a client request, particularly if the bottleneck bandwidth between the client and the origin server is much less than the bottleneck bandwidth between the client and the cache.
+
+2. Web caches can substantially reduce traffic on an institution’s access link to the Internet.
+
+The cost of purchasing a web cache is lower than upgrading access link.
+
+Through the use of **Content Distribution Networks (CDNs)**, Web caches are increasingly playing an important role in the Internet. A CDN company installs many geographically distributed caches throughout the Internet, thereby localizing much of the traffic. 
+
+#### 2.2.6 The Conditional GET
+
+Although caching can reduce user-perceived response times, it introduces a new problem—the copy of an object residing in the cache may be stale which means that the object housed in the Web server may have been modified since the copy was cached at the client.
+
+HTTP has a mechanism that allows a cache to verify that its objects are up to date. This mechanism is called the **conditional GET**.
+
+A request is **conditional GET** if:
+
+1. The request message uses the GET method
+2. The request message includes an `If-Modified-Since:` header line.
+
+### 2.3 File Transfer: FTP
+
+HTTP and FTP are both file transfer protocols and have many common characteristics; for example, they both run on top of TCP. However, the two application-layer protocols have some important differences:
+
+* FTP uses two parallel TCP connections to transfer a file, a **control connection** and a **data connection**
+
+	* The **control connection** is used for sending control information between the two hosts—information such as user identification, password,... 
+
+	* The **data connection** is used to actually send a file
+
+* FTP uses a separate control connection, FTP is said to send its control information **out-of-band** while HTTP, sends request and response header lines into the same TCP connection that carries the transferred file itself, **in-band**.
+
+Connection scenario:
+
+1. FTP client contacts FTP server at port 21, using TCP 
+2. Client authorized over control connection
+3. Client sends commands to change the remote directory over control connection
+4. When server receives file transfer command, server opens 2nd TCP data connection (for file) to client
+5. FTP client sends exactly one file over the data connection and then closes the data connection.
+6. If the client wants to send another file, FTP opens another data connection.
+
+Thus, the control connection remain opened for the whole session but a new data connection is created for each file. 
+
+Throughout a session, the FTP server must maintain **state** about the user.
+
+##### 2.3.1 FTP Commands and Replies
+
+Simple commands:
+
+* USER username: 
+	
+	Used to send the user identification to the server.
+
+* PASS password: 
+
+	sed to send the user password to the server.
+
+* LIST: 
+
+	Used to ask the server to send back a list of all the files in the current remote directory. The list of files is sent over a (new and non-persistent) data connection rather than the control TCP connection.
+
+* RETR filename: 
+
+	Used to retrieve (that is, get) a file from the current directory of the remote host. This command causes the remote host to initiate a data
+connection and to send the requested file over the data connection.
+
+* STOR filename: 
+
+	Used to store (that is, put) a file into the current directory of the remote host.
+
+Simple responses:
+
+* 331 Username OK, password required
+* 125 Data connection already open; transfer starting
+* 425 Can’t open data connection
+* 452 Error writing file
+
+## 2.4 Electronic Mail in the Internet
+
+Internet mail system has three major components: 
+
+1. **User agents**
+	
+	Microsoft Outlook, Apple Mail, Gmail
+
+2. **Mail servers**
+
+	Each recipient has a mailbox located in one of the mail servers. The mail server contains authentication check to his/her mailbox (usernames and passwords). Sender's mail server must also deal with failures of receiver's. Mail server also holds failed messages in a message queue and attempts to transfer them later. Reattempts are often done every 30 minutes or so; if there is no success after several days, the server removes the message and notifies the sender.
+
+3. **Simple Mail Transfer Protocol (SMTP)**
+
+	SMTP uses the reliable data transfer service of TCP to transfer mail from the sender’s mail server to the recipient’s mail server. SMTP has two sides: a client side, which executes on the sender’s mail server, and a server side, which executes on the recipient’s mail server.
+
+### 2.4.1 SMTP
+
+Although SMTP has numerous wonderful qualities, as evidenced by its ubiquity in the Internet, it is nevertheless a legacy technology that possesses certain archaic characteristics.
+
+Screnario:
+
+1. The client SMTP has TCP establish a connection to port 25 at the server SMTP
+2. Once this connection is established, they perform some application-layer **handshaking**	
+	
+	* SMTP client indicates the e-mail address of the sender and the e-mail address of the recipient.
+
+3. Then, the client sends the message (**transformation**)
+4. The client then repeats this process over the same TCP connection if it has other messages to send to the server; otherwise, it instructs TCP to close the connection (**closure**)
+
+Messages must be in 7-bit ASCI.
+
+SMTP can count on the reliable data transfer service of TCP to get the message to the server without errors
+
+##### 2.4.2 Comparison with HTTP
+
+When transferring the files, both persistent HTTP and SMTP use persistent connections.
+
+Differences:
+
+1. HTTP is mainly a **pull protocol** - get information on a Web server. SMTP is primarily a **push protocol** - sending files.
+2. SMTP requires messages to be 7-bit ASCII. HTTP does not impose this.
+3. HTTP encapsulates each object in its own HTTP response message. SMTP places all of the message’s objects into one message.
+
+#### 2.4.3 Mail Access Protocols
+
+Today, mail access uses a client-server architecture—the typical user reads e-mail with a client that executes on the user’s end system, for example, on an office PC, a laptop, or a smartphone. This means that the sender and receiver would dialogue directly with each other's PCs.
+
+This introduces another problem that mail server on PC has to remain always on, and connected to the Internet, in order to receive new mail, which can arrive at any time.
+
+A solution is that each user has a mail server, a sender SMTP will push email to the receiver's mail server, and then the receiver can fetch that email from his/her mail server later. However, SMTP is a push-protocol so we use another protocol for fetching, namely, **mail access protocols** including **Post Office Protocol—Version 3 (POP3)**, **Internet Mail Access Protocol (IMAP)**, and **HTTP**.
+
+![alt text](smtp-pop3.png "Today' email architecture")
+
+##### POP3
+
+**POP3** is a simple mail access protocol but limited protocol. POP3 download to local PC and delete messages in the mail server
+
+POP3 begins when the user agent (the client) opens a TCP connection to the mail server on port 110. With the TCP connection established, POP3 progresses through three phases: 
+
+1. Authorization
+2. Transaction
+
+	User agent retrieves messages. Also during this phase, the user agent can mark messages for deletion, remove deletion marks, and obtain mail statistics.
+
+2. Update.
+
+###### Authorization
+
+Client commands: 
+
+* user
+* pass
+
+Two possible responses form server:
+
+* +OK
+* -ERR
+
+###### Transaction phase
+
+Client commands: 
+
+* list: list message numbers
+* retr: retrieve message by number
+* dele: delete
+* quit
+
+###### Update phase
+
+Remove messages from mail box
+
+##### IMAP
+
+IMAP:
+
+* Keeps all messages in one place: at server
+* Allows user to organize messages in folders
+* Unlike POP3, an IMAP server maintains user state information across IMAP sessions
