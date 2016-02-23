@@ -3055,3 +3055,58 @@ The `config.locks` collection keeps track of all cluster-wide locks.
 
 Once a mongos has become the balancer, it checks its table of chunks for each collection to see if any shards have hit the **balancing threshold** meaning that a shard has significantly more chunks than the other shards. If an imbalance is detected, the balancer will redistribute chunks until all shards are within one chunk of one another.
 
+### Chapter 15: Choosing a Shard Key
+
+
+When you shard a collection you choose a field or two to use to split up the data. This key (or keys) is called a shard key. Once you have more than a few shards, it’s almost impossible to change your shard key, so it is important to choose correctly.
+
+For each collection that you’re planning to shard, start by answering the following:
+
+* How many shards are you planning to grow to? A three-shard cluster has a great deal more flexibility than a thousand-shard cluster. As a cluster gets larger, you should not plan to fire off queries that can hit all shards, so almost all queries must include the shard key.
+
+* Are you sharding to decrease read or write latency? (Latency refers to how long something takes, e.g., a write takes 20 ms, but we need it to take 10 ms.) Decreasing write latency usually involves sending requests to geographically closer or more powerful machines.
+
+* Are you sharding to increase read or write throughput? (Throughput refers to how many requests the cluster can handle at the same time: the cluster can do 1,000 writes in 20 ms, but we need it to do 5,000 writes in 20 ms.) Increasing throughput usually involves adding more parallelization and making sure that requests are distributed evenly across the cluster.
+
+#### Picturing Distributions
+
+There are three basic distributions that are the most common ways people choose to split their data: ascending key, random, and location-based.
+
+##### Ascending Shard Keys
+
+Ascending shard keys are generally something like a "date" field or ObjectId— anything that steadily increases over time. This approach has a side effect. Since the keys are incrementing, new writes will only be inserted into the last shard so that it is the only one growing overtime. This creates burden for the last shard and MongoDB will have to constant distribute chunks to other shards.
+
+##### Randomly Distributed Shard Keys
+
+On the other end of the spectrum are randomly distributed shard keys. Randomly distributed keys could be usernames, email addresses, UUIDs, MD5 hashes, or any other key that has no identifiable pattern in your dataset.
+
+This approach will distribute new writes to shards fairly evenly so that they can grow at roughly the same rate, limiting the number of migrates that need to occur.
+
+The downside is that MongoDB isn’t efficient at randomly accessing data beyond the size of RAM.
+
+##### Location-Based Shard Keys
+
+Location-based shard keys may be things like a user’s IP, latitude and longitude, or address.
+
+TODO: comeback
+
+#### Shard Key Strategies
+
+##### Hashed Shard Key
+
+A hashed shard key can make any field randomly distributed, so it is a good choice if you’re going to be using an ascending key a in a lot of queries but want writes to be random distributed. The trade-off is that you can never do a targeted range query with a hashed shard key.
+
+To create a hashed shard key, first create a hashed index:
+
+    > db.users.ensureIndex({"username" : "hashed"})
+    
+Next, shard the collection with:
+
+    > sh.shardCollection("app.users", {"username" : "hashed"})
+    { "collectionsharded" : "app.users", "ok" : 1 }
+
+Limitations:
+
+* Cannot use the unique option
+* Cannot use array field
+* Floating point values will be rounded to whole numbers before hashing

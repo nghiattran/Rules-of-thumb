@@ -328,6 +328,31 @@ One problems with priority scheduling is the **Starvation** of lower priority pr
 
 But it can be solved using **aging**. A aging is a technique of gradually increasing the priorities of processes that wait in the system for a long time.
 
+### 2.4.4 Scheduling in Real-Time Systems
+
+A real-time system is one in which time plays an essential role. Typically, one or more physical devices external to the computer generate stimuli, and the computer must react appropriately to them within a fixed amount of time.
+
+Real-time systems are generally categorized as **hard real time**, meaning there are absolute deadlines that must be met—or else!— and **soft real time**, meaning that missing an occasional deadline is undesirable, but nevertheless tolerable. 
+
+The events that a real-time system may have to respond to can be further categorized as **periodic** (meaning they occur at regular intervals) or **aperiodic** (meaning they occur unpredictably).
+
+A real-time system is said to be **schedulable** if  
+
+![alt text](schedulable.png "Schedulable formula")
+
+Where:
+
+**m**: number of periodic events 
+Event **i** occurs with period **Pi** and requires **Ci** sec of CPU time
+
+Real-time scheduling algorithms can be:
+
+* **Static**: make their scheduling decisions before the system starts running
+
+	* Works only when there is perfect information available in advance about the work
+
+* **Dynamic**: make scheduling decisions at run time, after execution has started
+
 ## Chapter 3: MEMORY MANAGEMENT
 
 **Memory hierarchy**:
@@ -387,6 +412,108 @@ When a process is running, the base register is loaded with the physical address
 
 So in the last example, program 1 will have base and limit as 0 and 16,384, respectively, program 2 will have base and limit as 16,384 and 32,768, respectively. So that when the process run `JMP 28` it will be treated as `JMP 16412`.
 
+In practice, the total amount of RAM needed by all the processes is often much more than can fit in
+memory. Keeping all processes in memory all the time requires a huge amount of memory and cannot be done if there is insufficient memory.
+
+Two general approaches to dealing with memory overload:
+
+* **Swapping**: bringing in each process in its entirety, running it for a while, then putting it back on the disk. Idle processes are mostly stored on disk, so they do not take up any memory when they are not running.
+* **Virtual memory**: allows programs to run even when they are only partially in main memory
+
 #### 3.2.2 Swapping
+
+There are two ways to allocate memory:
+
+* **Fixed partition**: For each process, a fixed sized partition will be created in memory.
+
+	* Fixed location, size, and number of processes in memory.
+	* Simple to manage.
+
+* **Variable partition**: 
+
+	* The number, location, and size of the partitions vary dynamically
+	* Need to keep track of partition information dynamically for memory allocation and deallocation
+	* Might create multiple memory holes.
+
+Since processes usually change theirs size variable partition is needed but it introduces another problem as shown below.
+
+![alt text](memory-swapping.png "Memmory swapping")
+
+When swapping creates multiple holes in memory, it is possible to combine them all into one big one by moving all the processes downward as far as possible, which is known as **memory compaction**. But it is usually not done because it requires a lot of CPU time.
+
+Solution for glowing space:
+
+* Allocate extra memory for each process
+* Use adjacent hole for managing the growing size
+* If there is not enough room for a process to grow, it will be swapped out for killed.
+
+#### 3.2.3 Managing Free Memory
+
+When memory is assigned dynamically, the operating system must manage it and there are two ways to keep track of memory usage:
+
+* Bitmaps
+* Free lists
+
+##### Memory Management with Bitmaps
+
+With a bitmap, memory is divided into allocation units as small as a few words and as large as several kilobytes. Corresponding to each allocation unit is a bit in the bitmap, which is 0 if the unit is free and 1 if it is occupied. 
+
+Issues with bitmap design:
+
+* The smaller the allocation unit, the larger the bitmap.
+* The larger the allocation unit, the smaller bitmap – But memory may be wasted in the last unit of the process if the process size is not an exact multiple of the allocation unit.
+
+Advantage:
+
+* Simple way to keep track of memory words in a fixed amount of memory
+
+The main problem: 
+
+* To allocate memory for the process with k unit size, the memory manager must search the bitmap to find a run of k consecutive 0 bits in the map and this is a slow operation.
+
+##### Memory Management with Linked Lists
+
+Another way of keeping track of memory is to maintain a linked list of allocated and free memory segments, where a segment either contains a process or is an empty hole between two processes. 
+
+Each entry in the list specifies:
+
+* A hole (H) or process (P)
+* The address at which it starts
+* The length
+* A pointer to the next item.
+
+Advantage: When a process terminates or is swapped out, updating the list is straightforward
+
+When the processes and holes are kept on a list sorted by address, several algorithms can be used to allocate memory for a created:
+
+* **First fit**: 
+	
+	* The memory manager scans along the list of segments until it finds a hole that is big enough.
+	* The hole is then broken up into two pieces, one for the process and one for the unused memory.
+	* Fast because it searches as little as possible.
+
+* **Next fit**:
+	
+	* Like first fit but it starts searching the list from the place where it left off last time instead of always at the beginning, as first fit does.
+
+* **Best fit**:
+
+	* Searches the entire list, from beginning to end, and takes the smallest hole that is adequate.
+	* Slower than the previous two because it has to search the whole list.
+	* Waste more memory because it tends to create tiny, useless hole, while holes in the previous two can be used for short process.
+
+* **Worst fit**:
+
+	* Contrast to best fit, it take the largest available hole, so that the new hole will be big enough to be useful.
+	* Not a very good idea either.
+
+Four algorithms can be speed up by maintaining two lists: 
+
+1. A list for processes: as discussed above.
+2. A list for holes:  can be maintained with sorted by size. Best fit does not need search entire list.
+
+With a hole list sorted by size, first fit and best fit are equally fast, and next fit is pointless.
+
+Another allocation algorithm is **quick fit**, which maintains separate lists for some of the more common sizes requested. Quick fit is quick to finding a hole of required size but it also has the a disadvantage, maintain the separate lists for hole is expensive.
 
 
