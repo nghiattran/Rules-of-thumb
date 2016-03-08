@@ -372,7 +372,7 @@ Three options to organize memory:
 * OS in ROM (Read-Only Memory) at the top of memory.
 * The device drivers may be at the top of memory in a ROM and the rest of the system in RAM down below
 
-![alt text](memory-organizarion.png "Three options to organize memory")
+![alt text](memory-organization.png "Three options to organize memory")
 
 Models (a) and (c) have the disadvantage that a bug in the user program can wipe out the operating system, possibly with disastrous results.
 
