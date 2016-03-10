@@ -1119,6 +1119,7 @@ There are two kinds of DNS messages: **query messages** and **reply messages**, 
 5. Additional section 
 
 	Contains other helpful records
-	
+
+
 
 
