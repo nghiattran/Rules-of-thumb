@@ -964,3 +964,161 @@ IMAP:
 * Keeps all messages in one place: at server
 * Allows user to organize messages in folders
 * Unlike POP3, an IMAP server maintains user state information across IMAP sessions
+
+### 2.5 DNS—The Internet’s Directory Service
+
+#### 2.5.1 Services Provided by DNS
+
+**Domain name system (DNS)** is a presentation of IP address in human language. By definition it also is:
+
+1. A distributed database implemented in a hierarchy of DNS servers.
+2. An application-layer protocol that allows hosts to query the distributed database.
+
+The DNS protocol runs over UDP and uses port 53.
+
+DNS provides a few other important services:
+
+* Host aliasing
+	
+	relay1.west-coast.enterprise.com could have an alias such as enterprise.com. In this case relay1.west-coast.enterprise.com is called **canonical hostname**.
+
+* Mail server aliasing
+
+	Similar to host aliasing
+
+* Load distribution
+
+	A busy site can have multiple servers. The DNS database contains this set of IP addresses. When clients make a DNS query for a name mapped to a set of addresses, the server responds with the entire set of IP addresses, but rotates the ordering of the addresses within each reply.
+
+#### 2.5.2 Overview of How DNS Works
+
+When a client wants to translate hostname to IP address:
+
+* Client invoke the client side of DNS, specifying the hostname that needs to be translated.
+* Clien's host sends a query message into the network.
+* DNS in the user’s host receives a DNS reply message from server that provides the desired mapping.
+* The mapping is passed to the invoking application.
+
+**Centralized design** of DNS,  one DNS server that contains all the mappings.
+
+Problems with a centralized design:
+
+* A single point of failure:
+
+	If the DNS crashes, so does internet.
+
+* Traffic volume
+
+* Distant centralized database
+
+* Maintenance
+
+	Too big to maintain.
+
+##### A Distributed, Hierarchical Database
+
+Three classes of DNS servers:
+
+1. Root DNS servers
+2. Top-level domain (TLD) DNS servers
+3. Authoritative DNS servers
+
+There is another type of DNS called **local DNS server**, which does not belong to the hierarchy of servers. 
+
+Each ISP has a local DNS server. When a host connects to an ISP, the ISP provides the host with the IP addresses of one or more of its local DNS servers. 
+
+Example: 
+Suppose the host cis.poly.edu desires the IP address of gaia.cs.umass.edu and  Polytechnic’s local DNS server is called dns.poly.edu and that an authoritative DNS server for gaia.cs.umass.edu is called dns.umass.edu. 
+
+1. The host cis.poly.edu first a DNS query message to its local DNS server, dns.poly.edu.
+2. The local DNS server forwards the query message to a root DNS server.
+3. The root DNS server takes note of the edu suffix and returns to the local DNS server a list of IP addresses for TLD servers responsible for edu.
+4. The local DNS server then resends the query message to one of these TLD servers.
+5. The TLD server takes note of the umass.edu suffix and responds with the IP address of the authoritative DNS server for the University of Massachusetts, namely, dns.umass.edu.
+6. The local DNS server resends the query message directly to dns.umass.edu, which responds with the IP address of gaia.cs.umass.edu
+
+DNS name resolution:
+
+* **Iterated queries**:
+	
+	Contacted server replies with name of server to contact.
+	"I don’t know this name, but ask this server"
+
+* **Recursive queries**:
+	
+	Puts burden of name resolution on contacted name server
+
+![alt text](iterated.png "DNS")
+F. Iterated queries
+
+![alt text](recursive.png "DNS")
+F. Recursive queries
+
+##### DNS Caching
+
+**DNS Caching**: when a DNS server receives a DNS reply (containing a mapping from a hostname
+to an IP address) it can cache the mapping in its local memory.
+
+With the use of caching, DNS queries can be reduced dramatically.
+
+Cache entries timeout (disappear) after some time (TTL)
+
+TLD servers typically cached in local name servers.
+
+Cached entries may be out-of-date. In case hostname changes IP address, may not be known  until all TTLs expire.
+
+#### 2.5.3 DNS Records and Messages
+
+The DNS servers that together implement the DNS distributed database store **resource records (RRs)**, including RRs that provide hostname-to-IP address mappings.
+
+A resource record is a four-tuple that contains the following fields:
+
+1. Name
+2. Value
+3. Type
+4. TTL
+	
+	The time to live of the resource record
+
+The meaning of **Name** and **Value** depend on **Type**:
+
+* If Type=A, then **Name** is a hostname and **Value** is the IP address.
+* If Type=NS, then **Name** is a domain (such as foo.com) and **Value** is the hostname of an authoritative DNS server that knows how to obtain the IP addresses for hosts in the domain.
+* If Type=CNAME, then **Value** is a canonical hostname for the alias hostname **Name**.
+* If Type=MX, then **Value** is the canonical name of a mail server that has an alias hostname *Name**.
+
+##### DNS Messages
+
+There are two kinds of DNS messages: **query messages** and **reply messages**, both with same message format:
+
+1. The first 12 bytes is the header section.
+
+	1. 16-bit query indentication
+	2. Flags:
+
+		* A 1-bit query/reply flag
+		* A 1-bit authoritative flag
+		* A 1-bit recursion-desired flag
+		* A 1-bit recursionavailable flag
+
+	3. 4 number fields
+
+2. Question section
+
+	1. A name field that contains the name that is being queried
+	2. A type field that indicates the type of question being asked about the name
+
+3. Answer section
+
+	Contains the resource records for the name that was originally queried
+
+4. Authority section 
+
+	Contains records of other authoritative servers.
+
+5. Additional section 
+
+	Contains other helpful records
+	
+
+
