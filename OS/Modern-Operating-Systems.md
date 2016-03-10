@@ -201,6 +201,12 @@ This can cause two active processes at the same time so Hoare and Brinch Hansen 
 
 When a computer is multiprogrammed, it frequently has multiple processes or threads competing for a CPU at the same time. If only one CPU is available, *scheduler* has to be made which process to run next by using **scheduling algorithm**. 
 
+Three types of schedulers:
+
+* Long-Term Scheduler – Selects a process from the pool of job and load into memory for execution
+* Short-term scheduler – selects a process from the ready queue and allocates the CPU.
+* Memory Scheduler – schedule which process is in memory and in disk
+
 ### 2.4.1 Introduction to Scheduling
 
 In addition to picking the right process to run, the scheduler also has to worry about making efficient use of the CPU because process switching is expensive.
@@ -292,6 +298,14 @@ Weaknesses:
 
 The scheduler picks the **shortest job first** (the process that can be done in the shortest time)
 
+Strengths:
+
+* Optimal for scheduling.
+
+Weaknesses:
+
+* Very difficult to know the length of CPU request.
+
 It is worth pointing out that shortest job first is optimal only when all the jobs are available simultaneously. Jobs arrive at different time, the scheduler only picks the shortest job available at a time which might not be optimal.
 
 ##### Shortest Remaining Time Next
@@ -302,8 +316,7 @@ A preemptive version of shortest job first is **shortest remaining time next**. 
 
 ##### Round-Robin Scheduling
 
-Round-Robin: each process is assigned a time interval, called its **quantum**, during which it is allowed to run. If the process is still running at the end of the quantum, the CPU is preempted and given to another process. If the process has blocked or finished before the quantum has elapsed, the CPU switching is done when the process
-blocks, of course. 
+Round-Robin: each process is assigned a time interval, called its **quantum**, during which it is allowed to run. If the process is still running at the end of the quantum, the CPU is preempted and given to another process. If the process has blocked or finished before the quantum has elapsed, the CPU switching is done when the process blocks, of course. 
 
 One issue with Round-Robin is the length of quantum. 
 
@@ -315,7 +328,7 @@ Setting the quantum too short causes too many process switches and lowers the CP
 
 ##### Priority Scheduling
 
-The basic idea is straightforward: each process is assigned a priority, and the runnable process with the highest priority is allowed to run. Even on a PC with a single owner, there may be multiple processes, some of them more important than others
+The basic idea is straightforward: each process is assigned a priority, and the runnable process with the highest priority is allowed to run.
 
 To prevent high-priority processes from running indefinitely, the scheduler may decrease the priority of the currently running process at each clock tick which causes its priority to drop below that of the next highest process, so a process switch occurs.
 
@@ -324,7 +337,7 @@ Ways to define process priority:
 * Internal way: based on the measurable quantity or quantities to compute the priority of a process.
 * External way: based on the importance of the process
 
-One problems with priority scheduling is the **Starvation** of lower priority process. Processes with lowest priority might never be executed if higher priority processes keep comming.
+One problems with priority scheduling is the **starvation** of lower priority process. Processes with lowest priority might never be executed if higher priority processes keep comming.
 
 But it can be solved using **aging**. A aging is a technique of gradually increasing the priorities of processes that wait in the system for a long time.
 
@@ -370,7 +383,7 @@ Three options to organize memory:
 
 * Operating system at the bottom of memory in RAM.
 * OS in ROM (Read-Only Memory) at the top of memory.
-* The device drivers may be at the top of memory in a ROM and the rest of the system in RAM down below
+* The device drivers may be at the top of memory in a ROM and the rest of the system in RAM down below.
 
 ![alt text](memory-organizarion.png "Three options to organize memory")
 
