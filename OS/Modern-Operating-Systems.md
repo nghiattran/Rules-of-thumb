@@ -385,7 +385,7 @@ Three options to organize memory:
 * OS in ROM (Read-Only Memory) at the top of memory.
 * The device drivers may be at the top of memory in a ROM and the rest of the system in RAM down below.
 
-![alt text](memory-organizarion.png "Three options to organize memory")
+![alt text](memory-organization.png "Three options to organize memory")
 
 Models (a) and (c) have the disadvantage that a bug in the user program can wipe out the operating system, possibly with disastrous results.
 
@@ -529,4 +529,126 @@ With a hole list sorted by size, first fit and best fit are equally fast, and ne
 
 Another allocation algorithm is **quick fit**, which maintains separate lists for some of the more common sizes requested. Quick fit is quick to finding a hole of required size but it also has the a disadvantage, maintain the separate lists for hole is expensive.
 
+#### 3.3.1 Paging
+
+On computers with virtual memory, when a program generate **virtual addresses**, the virtual addresses will be sent to a **MMU (Memory Management Unit)**  that maps the virtual addresses onto the physical memory address.
+
+Example:
+
+A computer generates 16-bit addresses (0 - 64KB). However, this computer only has 32KB of physical memory, so although it can handle 64KB but only 32KB of them can be loaded into memory at a time. Therefore, 64KB has to be written on the disk and devided into small pieces and those pieces can be brought in as needed.
+
+The virtual address space consists of fixed-size units called **pages** and corresponding units in the physical memory are called **page frames**. The two are generally the same size. Assume that every page and page frame is 4KB so that we will have 64/4 = 16 pages and 32/4 = 8 page frames
+
+**Page fault** is a sittuation in which a program references to an unmapped address. In this case the OS will pick a page with little useage and replace it with the unmapped address.
+
+With a 16 pages and 4KB per page memory, we need 16-bit virtual address consists of 4-bit page number (2^4 = 16 pages) and 12-bit offset (2^12 = 4KB)
+
+The page number is used as an index into the **page table**.  If the **Present/absent bit** is 0, the OS will remap page frame. If it is 1, the OS will find the corressponding address and put onto the memory bus.
+
+#### 3.3.2 Page Tables
+
+The mapping of virtual addresses onto physical address:
+
+1. The virtual address is split into a virtual page number and
+2. An offset
+
+The page number is used to find corresponding page frame and offset is to find physical address.
+
+##### Structure of a Page Table Entry
+
+A typical page table entry:
+
+1. Page frame number
+2. Present/absent bit
+3. Protection bits: what kinds of access are permitted
+4. Modified bit. If the page has been modified, it will be written to the disk before is removed from page frame. If not, it can just be abandoned.
+5. Referenced bit  is set whenever a page is referenced, either for reading or for writing. This bit is used to determine which page is evicted when a page fault occurs.
+6. Cache disable bit
+
+#### 3.3.3 Speeding Up Paging
+
+Two issues which paging:
+
+1. The mapping from virtual address to physical address must be fast.
+2. If the virtual address space is large, the page table will be large.
+
+##### Translation Lookaside Buffers
+
+Using paging reduces the performance of computer since it requires additional reference to access page table. To tackle this perform, computer designers use a device called **TLB (Translation Lookaside Buffer)** or sometimes an **associative memory**.
+
+How TLB works:
+
+* When a virtual address is presented to the MMU for translation, the hardware check if its virtual page number is in TLB.
+* If a match is found and the protection bit is not violated, the page frame is taken from TLB without going to the page table.
+* If a match is found but the protection bit is violated, a protection fault is generated.
+* If no match is found, MMU detects the miss and does an ordinary page table lookup. Then it wil replace one entry with the entry it looked up earlier.
+
+#### 3.3.4 Page Tables for Large Memories
+
+##### Multilevel Page Tables
+
+Example:
+
+We have 32-bit virtual address which is devided into 3 partitions: a 10-bit PT1 field, a 10-bit PT2 field, and a 12-bit Offset.
+
+Since there are 12 bits offset, each page is 4KB and there are 2^10*2^10 = 2^20 of them
+
+The point for having mutiple page table is to avoid keeping all the page table in memory all the time. 
+
+![alt text](multiple-page-table.png "Multiple page table")
+
+In the figure above, the top-level contains 1024 entries. Assume a process needs 12 megabytes: the bottom
+4 megabytes of memory for program text, the next 4 megabytes for data, and the top 4 megabytes for the stack. Therefore, we only need 3 entries from the top level page table. These entries reference to 3 second-level page tables which will be used as indexes for page frame. 
+
+Example: Address space: 0x00403004 (0000000001 0000000011 000000000100) contains PT1: 1 (0000000001), PT2: 3 (0000000011), and offset 4 (000000000100).
+
+It is possible for PT1 and PT2 to have different sizes and a page-table system can also be expanded to three or four level
+
+### 3.4 PAGE REPLACEMENT ALGORITHMS
+
+When a page fault occurs, the operating system has to choose a page to evict to make room for a new one. If the page is modified in the memory, it must be written to the disk before removed. If it is not modified, a new page will overwrite it.
+
+#### 3.4.1 The Optimal Page Replacement Algorithm
+
+The **optimal page replacement algorithm**: the page that will not be used for the longest period of time should be removed
+
+This approach guarantee the optimal solution but impossible most the time since there is no way to OS can know about future usage.
+
+#### 3.4.2 The Not Recently Used Page Replacement Algorithm
+
+To collect useful page usage statistic, we can have two status bits:
+
+* R is set whenever the page is referenced
+* M is set when the page is written to
+
+When a page fault occurs, the operating system inspects all the pages and divides them into four categories based on the current values of their R and M bits:
+
+* Class 0: not referenced, not modified.
+* Class 1: not referenced, modified.
+* Class 2: referenced, not modified.
+* Class 3: referenced, modified.
+
+The NRU algorithm removes a page at random from the lowest numbered nonempty class.
+
+#### 3.4.3 The First-In, First-Out (FIFO) Page Replacement Algorithm
+
+The operating system maintains a list of all pages currently in memory, with the most recent arrival at the tail and the least recent arrival at the head. On a page fault, the page at the head is removed and the new page added to the tail of the list. 
+
+This approach is rarely used since the oldest page may still be useful.
+
+#### 3.4.4 The Second-Chance Page Replacement Algorithm
+
+A simple modification to FIFO that avoids the problem of throwing out a heavily used page is to inspect the R bit of the oldest page. If it is 0, the page is both old and unused, so it is replaced immediately. If the R bit is 1, the bit is cleared, the page is put onto the end of the list of pages, and its load time is updated as though it had just arrived in memory. Then the search continues.
+
+If every page is referenced the oldest will be evicted since the R bit is cleared when a page is moved.
+
+#### 3.4.5 The Clock Page Replacement Algorithm
+
+A modification of the second chance. Clock page replacement algorithm keeps all pages in a circular list so that a page does not need to be moved around like in the second chance.
+
+#### 3.4.6 The Least Recently Used (LRU) Page Replacement Algorithm
+
+**LRU (Least Recently Used)** paging: when a page fault occurs, throw out the page that has been unused for the longest time.
+
+This approach yield almost optimal solution but create a lot overhead since maintaining a linked list of page, updating it, removing element from it every memory reference is time-consuming.
 
