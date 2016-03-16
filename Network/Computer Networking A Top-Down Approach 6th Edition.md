@@ -1120,6 +1120,60 @@ There are two kinds of DNS messages: **query messages** and **reply messages**, 
 
 	Contains other helpful records
 
+##### DNS attacks
 
+1. DDos attacks
 
+	* Bombard root servers with traffic
+	* Bombard TLD servers
 
+2. Redirect attacks
+3. Exploit DNS for DDoS
+
+### 2.6 Peer-to-Peer Applications
+
+#### 2.6.1 P2P File Distribution
+
+##### How bitorrent works?
+
+* When a user join a **torrent** (group of peers exchanging  chunks of a file), the **tracker** (server software that tracks who have a particular file) choose a set of peers and send it to that user.
+* That user try to establish TCP connection with all peers on the list.
+* The user then asks each peer for a particular chunk of file adn then choose **what** to sen and **who** should send it.
+	
+	* **what**: Bitorrent uses **rarest first** technique which mean a user will asks for a copy of the rarest chunk.
+	* **who**: Bitorrent calculates sending rate from each peer and gives priority to ones that have highest rate. Then a user will only do a trade with his best uploaders so that noone can be a freerider.
+
+#### 2.6.2 Distributed Hash Tables
+
+**Distributed hash table (DHT)**:
+
+* Database has (key, value) pairs
+* Allows any peer to query the distributed database with a particular key
+* Locates the peers that have the corresponding (key, value) pairs and return the key-value pairs to the querying peer
+* Any peer is allowed to insert new key-value pairs into the database.
+
+Assign key mechanism:
+
+* Assign integer identifier to each peer in range [0,2n-1] for some n.
+* To get integer identifier, hash the original key
+* Assign key to the peer that has the **closest ID** (the immediate successor of the key).
+
+Hence, when a user want a chunk of file, he/she will look for a peer that has the closest ID to the key. There are several ways to determine it:
+
+* Keep track of all the peers locally: 
+
+	nonscalable since each user has to know every other peer
+
+* Circular DHT
+
+	A user only knows his immediate successor and predecessor. So he has to send request to all peers that locate between him and the desired peer.
+
+* Circular DHT with shortcuts
+
+	Just like Circular DHT, has another type of overlay called **shortcuts** to reduce number of request need to sent.
+
+##### Peer Churn
+
+Since in P2P network, a peer may come and leave unexpectedly, all peers have to continuously ping their successor to update their state accordingly.
+
+When a peer usually keeps track of his first and second successors so that if a successor leaves, he can find a successor of the leaving peer and make it his successor.
