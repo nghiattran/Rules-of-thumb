@@ -1569,5 +1569,92 @@ Congestion-control approaches:
 		* Single bit indicating congestion (SNA, DECbit, TCP/IP ECN, ATM)
 		* Explicit rate for sender to send at
 
-### 3.6.3 Network-Assisted Congestion-Control Example: ATM ABR Congestion Control
+## 3.7 TCP Congestion Control
 
+TCP **congestion control**: have each sender limit the rate at which it sends traffic into its connection as a function of perceived network congestion
+
+Congestion control constrains incomming data so that the amount of unacknowledged data at a sender may not exceed the minimum of `cwnd` and `rwnd`:
+
+```
+	LastByteSent – LastByteAcked <= min{cwnd, rwnd}
+```
+
+which: `cwnd` is the congestion window
+
+Principles for adjusting `cwnd`:
+
+* A lost segment implies congestion, and hence, the TCP sender’s rate should be decreased when a segment is lost.
+* An acknowledged segment indicates that the network is delivering the sender’s segments to the receiver, and hence, the sender’s rate can be increased when an ACK arrives for a previously unacknowledged segment.
+* Bandwidth probing: increase transmission rate in response to arriving ACKs until a loss event occurs, at which point, the transmission rate is decreased
+
+**TCP congestion-control algorithm** has three major components:
+
+1. Slow start
+2. Congestion avoidance
+3. Fast recovery
+
+#### Slow Start
+
+At start, `cwnd` is typically initialized to 1 MSS` 
+`cwnd` increases by 1 MSS every time a transmitted segment is first acknowledged (1 at start. Send 1 segment and get ACK, `cwnd` increases by 1. Send another segment, `cwnd` = 2 + 2 (2 ACKs so far) ). Thus `cwnd` grow exponentially.
+If a loss occurs (timeout):
+
+* The TCP sender sets the value of cwnd to 1 and begins the slow start process anew.
+* Sets the value of `ssthresh` to `cwnd`/2
+* If `cwnd` reaches `ssthresh`, slow start ends and congestion avoidance begins.
+
+If three duplicate ACKs are detected:
+
+* TCP performs a fast retransmit
+* TCP enters the fast recovery mode
+
+#### Congestion Avoidance
+
+When TCP enter congestion avoidance mode, it increases `cwnd` more cautiously, one MSS for every RTT.
+
+If a loss occurs (timeout):
+
+* The TCP sender sets the value of cwnd to 1 and begins the slow start process anew.
+* Sets the value of `ssthresh` to `cwnd`/2
+* If `cwnd` reaches `ssthresh`, slow start ends and congestion avoidance begins.
+
+If three duplicate ACKs are detected:
+
+* `cwnd` = `ssthresh` + 3*MSS (3 duplicate ACKs)
+* TCP performs a fast retransmit
+* TCP enters the fast recovery mode
+
+#### Fast Recovery
+
+The value of `cwnd` is increased by 1 MSS for every duplicate ACK received for the missing segment that caused TCP to enter the fast-recovery state.
+
+In this mode, TCP retransmits the lost segment:
+
+* If new ACK, congestion avoidance begins
+* If loss occurs:
+
+	* The TCP sender sets the value of cwnd to 1 and begins the slow start process anew.
+	* Sets the value of `ssthresh` to `cwnd`/2
+	* If `cwnd` reaches `ssthresh`, slow start ends and congestion avoidance begins. 
+
+Fast recovery is a recommended, but not required, component of TCP.
+
+Early version of TCP, **TCP Tahoe**, doesn't have fast recovery but the newer version, **TCP Reno**, incorporates it.
+
+#### Macroscopic Description of TCP Throughput
+
+When the window size is `w` bytes and the current round-trip time is `RTT` seconds. then TCP’s transmission rate is roughly w/RTT. Assuming that RTT and W (the value of w when a loss event occurs) are approximately constant over the duration of the connection, the TCP transmission rate ranges from W/(2 * RTT) to W/RTT. 
+
+Since `w` increase linearly (1 MSS per RTT), we have:
+
+```
+	average throughput of a connection = ( W/(2 * RTT) + W/RTT ) / 2 = 0.75 * W / RTT
+```
+
+#### TCP Over High-Bandwidth Paths
+
+```
+	average throughput of a connection = 1.22 * MSS / ( RTT * sqrt(L) )
+```
+
+Which: the loss rate (L), the round-trip time (RTT), and the maximum segment size (MSS)
