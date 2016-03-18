@@ -1177,3 +1177,397 @@ Hence, when a user want a chunk of file, he/she will look for a peer that has th
 Since in P2P network, a peer may come and leave unexpectedly, all peers have to continuously ping their successor to update their state accordingly.
 
 When a peer usually keeps track of his first and second successors so that if a successor leaves, he can find a successor of the leaving peer and make it his successor.
+
+# Chapter 3
+
+## 3.1 Introduction and Transport-Layer Services
+
+**Transport-layer protocol** provides communication between app processes running on different hosts.
+
+Transport protocols run in end systems:
+
+* Sender side: breaks app messages into segments, passes to  network layer
+* Receiver side: reassembles segments into messages, passes to app layer
+
+### 3.1.1 Relationship Between Transport and Network Layers
+
+**Transport-layer protocol** provides logical communication between **processes running on different hosts**.
+
+**Network-layer protocol** provides logical communication between **hosts**.
+
+## 3.2 Multiplexing and Demultiplexing
+
+**Multiplexing** (sender): gather data from multiple sockets, add transport header  to create segments and pass them to the network layer
+
+**Demultiplexing** (receiver): use header info to deliver received segments to correct socket
+
+#### How Multiplexing and Demultiplexing work
+
+Transport-layer multiplexing requires:
+1. Sockets have unique identifiers
+2. Each segment have special fields that indicate the socket to which the segment is to be delivered
+
+From those requirements, when a host receive a datagram, the demultiplexer will examinize the datagram's header to find out which port should handle the request.
+
+
+Difference between TCP and UDP socket:
+
+* TCP: identified by a four-tuple (source IP address, source port number, destination IP address, destination port number)
+
+	* So if 2 segments ware sent to the same IP addres and port number but different source IP address and [prt number, they will be handled by different processes. (**Connection-Oriented Multiplexing and Demultiplexing**)
+
+	* Each socket attached to a process, and with each socket identified by its own fourtuple.
+
+* UDP: identified by a two-tuple (destination IP address and a destination port number)
+
+	So if 2 segments ware sent to the same IP addres and port number, they will be handled by the same process. (**Connectionless Multiplexing and Demultiplexing**)
+
+#### Web Servers and TCP
+
+## 3.3 Connectionless Transport: UDP
+
+**Connectionless**: there is no handshaking between sending and receiving transport-layer entities before sending a segment.
+
+Why UDP:
+
+* "No frills", "bare bones" Internet transport protoco
+* No connection establishment: no delay
+* No connection state: less tracking, less burden
+* Small packet header overhead: smaller packet size
+
+### 3.3.1 UDP Segment Structure
+
+UDP header has only four fields, each consisting of two bytes:
+
+* The port numbers
+* The length field specifies the number of bytes in the UDP segment
+* The checksum is used by the receiving host to check whether errors have been introduced into the segment
+* The length field specifies the length of the UDP segment, **including the header**, in bytes.
+
+#### 3.3.2 UDP Checksum
+
+Add all words in a segment and then take 1s complement of the its result, we have the checksum. On the receirver, add all words, plus the checksum:
+
+* If the result is all 1s, there is no error. 
+* If there is at least one zero, an error has occured.
+
+## 3.4 Principles of Reliable Data Transfer
+
+### 3.4.1 Building a Reliable Data Transfer Protocol
+
+#### Reliable Data Transfer over a Perfectly Reliable Channel: rdt1.0
+
+Assume the underlying channel is completely reliable: rdt1.0.
+
+Separate **finite-state machines (FSMs)** for sender, receiver:
+
+* Sender sends data into underlying channel
+* Receiver reads data from underlying channel
+
+#### Reliable Data Transfer over a Channel with Bit Errors: rdt2.0
+
+Assumptions:
+
+* Bits in a packet may be corrupted.
+* All transmitted packets are received in the order in which they were sent.
+
+Use **ARQ (Automatic Repeat reQuest) protocols** to fix errors:
+
+* **Positive acknowledgments**: no error, go to next state.
+* **Negative acknowledgments**: error, resend the segment.
+
+Three additional protocol capabilities are required in ARQ protocols:
+
+* Error detection
+* Receiver feedback
+* Retransmission
+
+rdt2.0 flaws:
+
+* ACK/NAK may be corrupted
+
+Three possibilities for handling corrupted ACKs or NAKs:
+
+* Add another sender-to-receiver packet to sender so that it can asks the receiver to repeat the ACK/NAK.
+* Add checksum bits so that the sender can detect and recover from bit errors.
+* The sender resend the packet so receiver needs to handle duplicate messages.
+
+rdt2.1: Simple solution is adding a new field called **sequence number** which indicates whether the packet is a retransmission or not.
+
+#### Reliable Data Transfer over a Lossy Channel with Bit Errors: rdt3.0
+
+Assumptions:
+
+* Bits in a packet may be corrupted.
+* The underlying channel can lose packets as well
+
+Two additional concerns:
+
+1. How to detect packet loss 
+2. What to do when packet loss occurs
+
+For this, the receiver might not get any message from the sender, in that case, not ACK/NAK will be sent. Hence, the sender must only wait a reasonable amount of time (at least as long as a round-trip delay between the sender and receiver) for ACK. If a ACK is not received within this time, the sender will retransmit the packet. 
+
+With this, **duplicate data packets** may arise if the delay is longer than waiting time which means that a packet is received normally but it takes longer than the waiting time so that ACK is sent back to sender after sender performs retransmittion.
+
+### 3.4.2 Pipelined Reliable Data Transfer Protocols
+
+Since rdt3.0 performs stop-and-wait operation, its is slow and undesirable. To fix this, **pipelining**, the sender is allowed to transmit three packets before having to wait
+for acknowledgments, is introduced.
+
+Pipelining has the following consequences:
+
+* The range of sequence numbers must be increased
+* The sender and receiver sides of the protocols may have to buffer more than one packet
+* The range of sequence numbers needed and the buffering requirements will depend on the manner in which a data transfer protocol responds to lost, corrupted, and overly delayed packets.
+
+Two basic approaches toward pipelined error recovery can be identified: **Go-Back-N** and **selective repeat**.
+
+### 3.4.3 Go-Back-N (GBN)
+
+In a **Go-Back-N (GBN)** protocol, the sender is allowed to transmit multiple packets (when available) without waiting for an acknowledgment, but is constrained to have no more than some maximum allowable number, N, of unacknowledged packets in the pipeline.
+
+The packet is devided into 4 parts as following
+
+![alt text](gbn.png "gbn")
+
+#### How GBN works
+
+Sender:
+
+* Send N of number of packets starts from K (At start, K = 0)
+* Received ACKs from receiver with sequence number M
+* Set K = M and repeat until K = number of packets need to be sent
+
+Receiver:
+
+* Received packet
+* Check if the number seqence is in order
+	
+	* If yes, send ACK with the receiving sequence number
+	* If no, send ACK with the lastest in order sequence number (if get 0 1 2 6, send 2)
+
+![alt text](gbn-process.png "gbn")
+
+Drawbacks:
+
+* Have to resend many packets if window size is big.
+* If window size is too small, slow performance like stop-and-wait.
+
+### 3.4.4 Selective Repeat (SR)
+
+**Selective-repeat** protocols avoid unnecessary retransmissions by having the sender retransmit only those packets that it suspects were received in error at the receiver.
+
+![alt text](sp.png "sp")
+
+The SR receiver will acknowledge a correctly received packet whether or not it is in order. Out-of-order packets are buffered until any missing packets are received, at which point a batch of packets can be delivered in order to the upper layer.
+
+![alt text](sp-process.png "sp")
+
+This approach also introduces another problem. If the sending packet sequence are repeative (0 1 2 3 0 1 2 3 ... ), it is possible that the receiver receives packet with number sequence 0 (first 0), but thinks it is the second 0.
+
+
+## 3.5 Connection-Oriented Transport: TCP
+
+### 3.5.1 The TCP Connection
+
+TCP:
+
+* Point-to-point: one sender, one receiver
+* Reliable, in-order byte steam
+* Pipelined
+* Full duplex service
+* Connection-oriented: handshaking is require before transmission
+* Provides flow control
+
+**Three-way handshaking**: the client first sends a special TCP segment; the server responds with a second special TCP segment; and finally the client responds again with a third special segment.
+
+### 3.5.2 TCP Segment Structure
+
+Maximum segment size (MSS)
+
+A TCP segment header contains:
+
+* Source and destination port numbers
+* 32-bit sequence number field and 32-bit acknowledgment number field are used for implementing a reliable data transfer service
+* 16-bit receive window field is used for flow control
+* 4-bit header length field specifies the length of the TCP header
+* The flag field contains 6 bits
+
+	* ACK: acknowledgment field is valid or not
+	* RST, SYN, and FIN are for connection setup and teardown
+	* PSH: should pass the data to the upper layer immediately
+	* URG: indivates this segment that the sending-side upper-layer entity has marked as “urgent.”
+* 16-bit urgent data pointer field
+
+#### Sequence Numbers and Acknowledgment Numbers
+
+The **sequence number** for a segment is therefore the byte-stream number of the first byte in the segment.
+
+Suppose we have a file consisting of 500,000 bytes, that the MSS is 1,000 bytes. 
+
+* Therefore, the file is divided into 500 segments. The first segment gets assigned sequence number 0, the second gets assigned sequence number 1000 and so on. 
+* Each sequence number is inserted in the sequence number field in the header of the appropriate TCP segment.  
+
+The **acknowledgment number** that Host A puts in its segment is the sequence number of the next byte Host A is expecting from Host B.
+
+Example:
+
+If host A received a segment containning bytes from 0 - 499, it will acknowledge 500.
+If host A received a segment containning bytes from 0 - 499 and 1000 - 1499, hence missing 500-1000, it will acknowledge 499 because 1000-1499 is not in order.
+
+Therefore, TCP is said to provide **cumulative acknowledgments**.
+
+### 3.5.3 Round-Trip Time Estimation and Timeout
+
+#### Estimating the Round-Trip Time
+
+As being said above, setting timeout is trival since if it is too short, we will experience unescessary retransmittions but if it is too long, the performance suffers.
+
+The sample RTT, denoted `SampleRTT`, is the amount of time between when the segment is sent (that is, passed to IP) and when an acknowledgment for the segment is received.
+
+Most TCP implementations take only one `SampleRTT` measurement at a time (so if many segments are sent, only one is picked?). Also, TCP never computes a `SampleRTT` for a segment that has been retransmitted; it only measures `SampleRTT` for segments that have been transmitted once.
+
+Formula for calculating `EstimatedRTT`:
+
+```
+	EstimatedRTT = (1 – K) * EstimatedRTT + K * SampleRTT
+```
+
+Typical K is 0.125
+
+#### Setting and Managing the Retransmission Timeout Interval
+
+Clearly, the interval should be greater than or equal to `EstimatedRTT`, or unnecessary retransmissions would be sent. Also, the interval should not be too much larger than `EstimatedRTT`, otherwise, when a segment is lost.
+
+Formula for calculating timeout:
+
+```
+	TimeoutInterval = EstimatedRTT + 4 • DevRTT
+
+	with 
+
+	DevRTT = (1 – L) * DevRTT + L * | SampleRTT – EstimatedRTT |
+```
+
+An initial TimeoutInterval value of 1 second is recommended.
+
+When a timeout occurs, the value of `TimeoutInterval` is doubled to avoid a premature timeout occurring for a subsequent segments.
+
+### 3.5.4 Reliable Data Transfer
+
+### 3.5.5 Flow Control
+
+When receive a segment, the receiver will put all data into a buffer waiting to be read by an application. However, that application might not read data at the time it is received, the buff can be overflowed.
+
+TCP provides a flow-control service to its applications to eliminate this possibility. **Flow control** is thus a speed-matching service—matching the rate at which the sender is sending against the rate at which the receiving application is reading.
+
+TCP provides flow control by having the sender maintain a variable called the **receive window** which  is used to give the sender an idea of how much free buffer space is available at the receiver.
+
+Example:
+
+* Suppose that Host A is sending a large file to Host B over a TCP connection.
+* Host B allocates a receive buffer to this connection; denote its size by `RcvBuffer`.
+* From time to time, the application process in Host B reads from the buffer and defines:
+
+	* LastByteRead: the number of the last byte in the data stream read from the buffer by the application process in B
+	* LastByteRcvd: the number of the last byte in the data stream that has arrived from the network and has been placed in the receive buffer at B
+	* rwnd: receive window
+
+* Then Host B sends receive window in ACK to host A
+* Host A make sure the sending data is less than rwnd, and sends the next segment
+
+Since TCP ensure the buffer will not be overflowed, we have:
+
+```
+	LastByteRcvd – LastByteRead <= RcvBuffer
+```
+
+And receive window is:
+
+```
+	rwnd = RcvBuffer – [LastByteRcvd – LastByteRead]
+```
+
+One problem arises. Host B only sends `rwnd` in ACK (therefore Host A has to send something first), so if at a time buffer in Host B is full, Host B send `rwnd` = 0 to Host A. Host A reads it and stops sending. But later a application on Host B frees the buffer but it cannot send any other ACK since Host A stops sending message.
+
+To solve this, TCP requires Host A to keep sending 1 byte segment to Host A until Host B send back `rwnd` is not 0.
+
+### 3.5.6 TCP Connection Management
+
+To establish TCP connection, two host perform **three-way handshaking**:
+
+* Step 1. The client-side TCP first sends a special TCP segment with the **SYN bit**, is set to 1, and a **sequence number** (x) to the server-side TCP
+* Step 2. Once the IP datagram containing the TCP SYN segment arrives at the server host, the server extracts the TCP SYN segment from the datagram, allocates the TCP buffers and variables to the connection, and sends a connection-granted segment to the client TCP (**SYNACK segment**: SYN bit = 1, a sequence number (y), ACKbit=1, ACKnum=x+1).
+* Step 3. Upon receiving the SYNACK segment, the client also allocates buffers and variables to the connection (ACKbit=1, ACKnum=y+1).
+
+To tear down connection:
+
+* Client closes connection and sends segment with FIN bit set to 1, server sends ACK back.
+* Server closes connection and sends segment with FIN bit set to 1, client sends ACK back.
+
+## 3.6 Principles of Congestion Control
+
+### 3.6.1 The Causes and the Costs of Congestion
+
+**Congestion**: too many sources sending too much data too fast for network to handle
+
+#### Scenario 1: Two Senders, a Router with Infinite Buffers
+
+As the name describes, there are two senders, and a receiver with infinite buffer R transmission rate.
+
+Since there are two sender, each sender's transmission rate is from 0 - R/2. So, if a sender can send with > R/2 tranmission rate, only R/2 is received by receiver. fom this perspective, transmission rate >= R/2 is desirable since it means receiver's utility rate is 100%.
+
+On the other hand, since receiver can only handle R/2, if a sender sends > R/2, we will experience infinite delay.
+
+Even in this (extremely) idealized scenario, we’ve already found one cost of a congested network—large queuing delays are experienced as the packet arrival rate nears the link capacity.
+
+#### Scenario 2: Two Senders and a Router with Finite Buffers
+
+Since the buffer can be overflowed and incomming segments will be dropped, we will need to retransmit dropped segment. Let `K` denote the sending rate of the original data (size of sending segments / time it takes) and `KR` denote for sending rate at transport layer ( (size of sending segments + size of all retransmitted data )/ time it takes) (**offered load**)
+
+Cases:
+
+1. Sender knows whether buffer is full and sends segments (no drop)
+
+	* `K` = `KR`: no loss so no need for retransmission (size of all retransmitted data = 0)
+	* `K` is linear from 0 to R/2 (2 senders, just like the previous)
+
+2. Sender retransmits only when a packet is known for certain to be lost
+
+	* `KR` is linear from 0 to R/2
+	* `K` is linear from 0 to T (T < R/3), since sender has to retransmit lost packets
+	* The sender must perform retransmissions in order to compensate for dropped (lost) packets due to buffer overflow 
+
+3. The sender may time out prematurely and retransmit a packet that has been delayed in the queue but not yet lost
+
+	* `KR` is linear from 0 to R/2
+	* `K` is linear from 0 to T1 (T1 < T < R/3), since sender has to retransmit lost packets and retransmit delay packets.
+
+#### Scenario 3: Four Senders, Routers with Finite Buffers, and Multihop Paths
+
+Since there are multihop paths, sending rate also depends on forwarding rate at all router along the path.
+
+Suppose Host A sends a packet to Host B, which happens to go through router 1 and router 2. For some reason, the buffer at router is full when receiving the packet, so it is dropped. Therefore, transmission capacity at router, which is used for forwarding the packet to router 2, is wasted.
+
+So here we see yet another cost of dropping a packet due to congestion—when a packet is dropped along a path, the transmission capacity that was used at each of the upstream links to forward that packet to the point at which it is dropped ends up having been wasted.
+
+### 3.6.2 Approaches to Congestion Control
+
+Congestion-control approaches:
+
+* End-to-end congestion control: 
+
+	* No explicit feedback from network
+	* Congestion inferred by the end systems based only on observed network behavior
+	* Approach taken by TCP
+
+* Network-assisted congestion control:
+
+	* Routers provide feedback to end systems
+
+		* Single bit indicating congestion (SNA, DECbit, TCP/IP ECN, ATM)
+		* Explicit rate for sender to send at
+
+### 3.6.3 Network-Assisted Congestion-Control Example: ATM ABR Congestion Control
+
