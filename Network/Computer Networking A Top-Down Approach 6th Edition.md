@@ -14,7 +14,7 @@ A **packet switch** takes a packet arriving on one of its incoming communication
 today’s Internet are **routers** and **link-layer** switches.
 
 1. Link-layer switches are typically used in access networks,
-2. Rrouters are typically used in the network core.
+2. Routers are typically used in the network core.
 
 The sequence of communication links and packet switches traversed by a packet from the sending end system to the destination is called a **route** or **path** through the network.
 
@@ -149,7 +149,7 @@ Which:
 
 `(N-1)*L/R` are the time it takes to transmit N packages and `L/R` for forwarding delay.
 
-#### Queuing Delays and Packet Los
+#### Queuing Delays and Packet Loss
 
 Each packet switch has multiple links attached to it. For each attached link, the packet switch has an output buffer (also called an output queue), which stores packets that the router is about to send into that link. 
 
@@ -188,7 +188,7 @@ Packet switching:
 
 ### 1.3.3 A Network of Networks
 
-Users are connected to each other through ISPs and ISPs are also interconnected. This is called a ** network of networks**.
+Users are connected to each other through ISPs and ISPs are also interconnected. This is called a **network of networks**.
 
 Network structures:
 
@@ -352,15 +352,21 @@ Each layer provides its service by:
 2. One layer may need information that is present only in another layer.
 
 
-| Application  |							| Application  |
-| Transport    |							| Presentation |
-| Network      |							| Session      |
-| Link         |							| Transport    |
-| Physical     |							| Network      | 
-											| Link         |
-											| Physical     |
+| Application  |              | Application  |
 
-a.  Five-layer IPS 						b.  OSI reference model
+| Transport    |              | Presentation |
+
+| Network      |              | Session      |
+
+| Link         |              | Transport    |
+
+| Physical     |              | Network      | 
+
+                              | Link         |
+
+                              | Physical     |
+
+a.  Five-layer IPS          b.  OSI reference model
 
 Internet protocol stack
 
@@ -408,7 +414,7 @@ Transport protocols:
 
 ###### 3. Network Layer
 
-> The Internet’s **network layer** (simply referred as ** IP layer**) is responsible for moving network-layer packets known as **datagrams** from one host to another. 
+> The Internet’s **network layer** (simply referred as **IP layer** ) is responsible for moving network-layer packets known as **datagrams** from one host to another. 
 
 Network protocols:
 
@@ -571,7 +577,7 @@ When a transport protocol provides this service, the sending process can just pa
 
 When a transport-layer protocol doesn’t provide reliable data transfer, some of the data sent by the sending process may never arrive at the receiving process. This may be acceptable for **loss-tolerant applications**. For example in multimedia application, some amount of data loss only results a small glitch.
 
-#### 1. Throughput
+#### 2. Throughput
 
 Because other sessions will be sharing the bandwidth along the network path, and because these other sessions will be coming and going, the available throughput can fluctuate with time. 
 
@@ -579,11 +585,11 @@ Another natural service that a transport-layer protocol could provide, namely, g
 
 While bandwidth-sensitive applications have specific throughput requirements, **elastic applications** can make use of as much, or as little, throughput as happens to be available.
 
-#### 1. Timing
+#### 3. Timing
 
 A transport-layer protocol can also provide timing guarantees. 
 
-#### 1. Security
+#### 4. Security
 
 A transport protocol can provide an application with one or more security services like encryption.
 
@@ -667,6 +673,7 @@ It is important to note that the server sends requested files to clients without
 Two type of HTTP connections:
 
 **Non-persistent connections**: each request/response pair be sent over a separate TCP connection.
+
 **Persistent connections**:  all of the requests and their corresponding responses be sent over the same TCP connection
 
 HTTP uses persistent connections in its default mode, but HTTP clients and servers can be configured to use non-persistent connections instead.
@@ -712,6 +719,7 @@ For persistent connections, time to get the whole page is:
 	T = (1 + 1 + objects) * RTT
 
 First 1: for handshaking
+
 Second 1: for getting base html file
 
 #### 2.2.3 HTTP Message Format
@@ -1049,9 +1057,11 @@ DNS name resolution:
 	Puts burden of name resolution on contacted name server
 
 ![alt text](iterated.png "DNS")
+
 F. Iterated queries
 
 ![alt text](recursive.png "DNS")
+
 F. Recursive queries
 
 ##### DNS Caching
@@ -1077,7 +1087,6 @@ A resource record is a four-tuple that contains the following fields:
 2. Value
 3. Type
 4. TTL
-	
 	The time to live of the resource record
 
 The meaning of **Name** and **Value** depend on **Type**:
@@ -1085,7 +1094,7 @@ The meaning of **Name** and **Value** depend on **Type**:
 * If Type=A, then **Name** is a hostname and **Value** is the IP address.
 * If Type=NS, then **Name** is a domain (such as foo.com) and **Value** is the hostname of an authoritative DNS server that knows how to obtain the IP addresses for hosts in the domain.
 * If Type=CNAME, then **Value** is a canonical hostname for the alias hostname **Name**.
-* If Type=MX, then **Value** is the canonical name of a mail server that has an alias hostname *Name**.
+* If Type=MX, then **Value** is the canonical name of a mail server that has an alias hostname **Name**.
 
 ##### DNS Messages
 
@@ -1099,7 +1108,7 @@ There are two kinds of DNS messages: **query messages** and **reply messages**, 
 		* A 1-bit query/reply flag
 		* A 1-bit authoritative flag
 		* A 1-bit recursion-desired flag
-		* A 1-bit recursionavailable flag
+		* A 1-bit recursion available flag
 
 	3. 4 number fields
 
@@ -1222,8 +1231,6 @@ Difference between TCP and UDP socket:
 
 	So if 2 segments ware sent to the same IP addres and port number, they will be handled by the same process. (**Connectionless Multiplexing and Demultiplexing**)
 
-#### Web Servers and TCP
-
 ## 3.3 Connectionless Transport: UDP
 
 **Connectionless**: there is no handshaking between sending and receiving transport-layer entities before sending a segment.
@@ -1334,16 +1341,13 @@ The packet is devided into 4 parts as following
 #### How GBN works
 
 Sender:
-
 * Send N of number of packets starts from K (At start, K = 0)
 * Received ACKs from receiver with sequence number M
 * Set K = M and repeat until K = number of packets need to be sent
 
 Receiver:
-
 * Received packet
 * Check if the number seqence is in order
-	
 	* If yes, send ACK with the receiving sequence number
 	* If no, send ACK with the lastest in order sequence number (if get 0 1 2 6, send 2)
 
@@ -1595,8 +1599,8 @@ Principles for adjusting `cwnd`:
 
 #### Slow Start
 
-At start, `cwnd` is typically initialized to 1 MSS` 
-`cwnd` increases by 1 MSS every time a transmitted segment is first acknowledged (1 at start. Send 1 segment and get ACK, `cwnd` increases by 1. Send another segment, `cwnd` = 2 + 2 (2 ACKs so far) ). Thus `cwnd` grow exponentially.
+At start, `cwnd` is typically initialized to 1 MSS `cwnd` increases by 1 MSS every time a transmitted segment is first acknowledged (1 at start. Send 1 segment and get ACK, `cwnd` increases by 1. Send another segment, `cwnd` = 2 + 2 (2 ACKs so far) ). Thus `cwnd` grow exponentially.
+
 If a loss occurs (timeout):
 
 * The TCP sender sets the value of cwnd to 1 and begins the slow start process anew.
@@ -1643,9 +1647,9 @@ Early version of TCP, **TCP Tahoe**, doesn't have fast recovery but the newer ve
 
 #### Macroscopic Description of TCP Throughput
 
-When the window size is `w` bytes and the current round-trip time is `RTT` seconds. then TCP’s transmission rate is roughly w/RTT. Assuming that RTT and W (the value of w when a loss event occurs) are approximately constant over the duration of the connection, the TCP transmission rate ranges from W/(2 * RTT) to W/RTT. 
+When the window size is `W` bytes and the current round-trip time is `RTT` seconds. then TCP’s transmission rate is roughly `W/RTT`. Assuming that `RTT` and `W` (the value of w when a loss event occurs) are approximately constant over the duration of the connection, the TCP transmission rate ranges from `W/(2 * RTT)` to `W/RTT`. 
 
-Since `w` increase linearly (1 MSS per RTT), we have:
+Since `W` increase linearly (1 MSS per RTT), we have:
 
 ```
 	average throughput of a connection = ( W/(2 * RTT) + W/RTT ) / 2 = 0.75 * W / RTT
