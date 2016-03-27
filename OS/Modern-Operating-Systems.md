@@ -652,3 +652,321 @@ A modification of the second chance. Clock page replacement algorithm keeps all 
 
 This approach yield almost optimal solution but create a lot overhead since maintaining a linked list of page, updating it, removing element from it every memory reference is time-consuming.
 
+### 3.5 Modeling Page Replacement Algorithm
+
+#### 3.5.1 Belady’s Anomaly
+
+Intuitively, it might seem that the more page frames the memory has, the fewer page faults a program will get. This is not always the case – **Belady’s Anomaly**
+
+For instance:
+
+Job sequence:
+
+0 1 2 3 0 1 4 0 1 2 3 4
+
+3 page frames with 9 page faults (bold ones):
+
+| 0 | 1 | 2 | 3 | 0 | 1 | 4 | 0 | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| **0** | 0 | 0 | **3** | 3 | 3 | **4** |   |   | 4 | 4 |   |
+|   | **1** | 1 | 1 | **0** | 0 | 0 |   |   | **2** | 2 |   |
+|   |   | **2** | 2 | 2 | **1** | 1 |   |   | 1 | **3** |   |
+
+4 page frames with 10 page faults (bold ones):
+
+| 0 | 1 | 2 | 3 | 0 | 1 | 4 | 0 | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| **0** | 0 | 0 | 0 |   |   | **4** | 4 | 4 | 4 | **3** | 3 |
+|   | **1** | 1 | 1 |   |   | 1 | **0** | 0 | 0 | 0 | **4** |
+|   |   | **2** | 2 |   |   | 2 | 2 | **1** | 1 | 1 | 1 |
+|   |   |   | **3** |   |   | 3 | 3 | 3 | **2** | 2 | 2 |
+
+#### 3.5.2 Stack Algorithm
+
+A paging system can be characterized by three items:
+1. The reference string of the executing process
+2. The page replacement algorithm
+3. The number of page frames available in memory
+
+How **Stack Algorithm** works:
+* Maintains an internal array M that keep track of the state of memory.
+* M has as many as virtual memory pages n.
+* Top m entries contain all the pages currently in the memory (page frames).
+* Bottom n - m entries contains all the pages that have been referenced once but have been page out and are not currently in memory
+
+**Stack Algorithm** in action:
+1. When a page is referenced, it is always moved to the top entry in M.
+2. If the page referenced was already in M, all pages above it move down one position.
+3. A transition from within the box to outside of it corresponds to a page being evicted from the memory
+4. The pages that were below the referenced page are not moved.
+
+Basically, stack algorithm increases page frame (actual page frame in memory + additional virtual page frame on disk). 
+
+Stack algorithm do not suffer from Belady’s Anormaly because instead of leaving the list unchanged in the referenced page is already in the list, like in normal page replacement algorithm, it move every page above down one and move it on top (step 2, 3).
+
+### 3.5 DESIGN ISSUES FOR PAGING SYSTEMS
+
+#### 3.5.1 Local versus Global Allocation Policies
+
+**Local page replacement**: only consider replacement for pages that are used by the process that request referenced page:
+* Fixed amount of page for a process
+
+**Global page replacement**: consider replacement for all pages in memory.
+* Number of page for each process varies from time to time
+* In general, better solution
+
+#### 3.5.2 Load Control
+
+Even though we use best replacement algorithm with global allocation policies, the system might still thrash, if the combined working sets of all processes exceed the capacity of memory.
+
+Possible concern is reducing the degree of multiprogramming – swap out some of processes into the disk.
+
+#### 3.5.3 Page Size
+
+The **page size** is a parameter that can be chosen by the operating system
+
+**Internal fragmentation** is the wasted space within each allocated block because of rounding up from the actual requested allocation to the allocation granularity.  
+
+**External fragmentation** is the various free spaced holes that are generated in either your memory or disk space. External fragmented blocks are available for allocation, but may be too small to be of any use.
+
+If the page size is too big:
+* Waste since data may not use up the whole page size
+
+If the page size is too small:
+* Requires more page, more memory to keep track those pages
+* Too many pages means more time for seeking and rotating
+* Longer loading time
+
+Overhead and optimal page size:
+
+```
+	Overhead = **s****e**/**p** + **p**/2
+
+	Overhead' = - **s** **e**/**p**^2 + 1/2 = 0
+
+	Optimal page size = sqrt(2**s** **e**)
+
+```
+
+Average process size: **s**
+
+Page size: **p**
+
+Page entry: **e**
+
+Number of pages needed per process: **s**/**p**
+
+Page table space: **s****e**/**p**
+
+Internal fragmentation: **p**/2
+
+### 3.7 SEGMENTATION
+
+Segment is a logical entity, which the programmer knows and uses as a logical entity.
+
+But divided memory into segments, computer can handle more jobs seen segment can grow and shrink accordingly to jobs.
+
+#### 3.7.1 Implementation of Pure Segmentation
+
+OS maintain a segment table to keep track of all segments
+
+|   | limit | Base |
+|---|-------|------|
+| 0 | 1000  | 1400 |
+| 1 | 400   | 6300 |
+| 2 | 400   | 4300 |
+| 3 | 1100  | 3200 |
+| 4 | 1000  | 4700 |
+
+Example:
+
+* A reference to segment 3 to byte 852: 3200 + 852 = 4052
+* A reference to segment 0 to byte 1222: Error since byte 1222 is out of range of segment 0
+
+When using segment, memory will be divided up into a number of chunks, some containing segments and some containing holes. Those holes in memory is called **external fragmentation**, wasted memory in holes.
+
+#### 3.7.2 Segmentation with Paging
+
+If the segments are large, it may be inconvenient, or even impossible, to keep them in main memory in their entirety. Fortunately, we can use a combination of segmentation and paging to tackle that problem.
+
+To keep track of all segment OS uses segment table which contains **segment descriptor**. Segment descriptor contains address to the page table, segment length (in pages), and several other infomation.
+
+So a virtual address for this requires 3 things:
+1. Segment number
+2. Page number  
+3. Offset within page
+
+How it works:
+* The segment number was used to find the segment descriptor.
+* A check was made to see if the segment’s page table was in memory. If it was, it was located. If it was not, a segment fault occurred. If there was a protection violation, a fault (trap) occurred.
+* The page table entry for the requested virtual page was examined. If the page itself was not in memory, a page fault was triggered. If it was in memory, the main-memory address of the start of the page was extracted from the page table entry.
+* The offset was added to the page origin to give the main memory address where the word was located.
+* The read or store finally took place.
+
+
+## Chapter 4: FILE SYSTEMS
+
+Three essential requirements for long-term information storage:
+1. It must be possible to store a very large amount of information.
+2. The information must survive the termination of the process using it
+3. Multiple processes must be able to access the information at once
+
+### 4.1 FILES
+
+#### 4.1.1 File System
+
+#### 4.1.2 File Structure
+
+Three kinds of file structure:
+* Byte sequence
+* Record sequence
+* Tree
+	* File consists of a tree of records
+
+#### 4.1.3 File Types
+
+File types:
+* Regular files:
+	Contain user information
+* Directories:
+	System files for maintaining the structure of the file system
+* Character special files:
+	Related to input/output and used to model serial I/O devices, such as terminals, printers, and networks
+* Block special files:
+	Are used to model disks
+
+##### Regular files
+
+Two types of regular files:
+* ASCII files:
+* Binary files:
+	* Executable files:
+		* Has 5 sections: header, text, data, relocation bits, and symbol table
+		* Header: contains **magic number**, identifying the file as an executable file
+	* Archive files
+		* A collection of library procedures (modules) compiled but not linked
+
+#### 4.1.4 File Access
+
+**Sequential access**:
+	* A process can read all the bytes in a file in order, starting from the beginning. 
+	* Cannot read out of order
+**Random Access**:
+	* A process can read all the bytes in a file in any order. 
+
+### 4.2 DIRECTORIES
+
+Three ways to structure directory:
+* Single-level directory System 
+	* One directory containing all files
+* Two-level directory System
+	* Giving each user a private directory
+* Hierarchical directory System
+	* User can create a directory to group their files in logical way
+
+### 4.3 FILE-SYSTEM IMPLEMENTATION
+
+#### 4.3.1 File-System Layout
+
+Most disk can be divided into partitions with different file system. Sector 0 of the disk is called the **MBR** (**Master Boot Record**) and is used to boot the computer.
+
+The end of the MBR contains the **partition table**. This table gives the starting and ending addresses of each partition. Only one partition can be active at a time.
+
+When the computer is booted:
+1. The BIOS reads in and executes the MBR
+2. MBR locates the active partition, read in its first block, which is called the **boot block**, and execute it.
+3. The program in the boot block loads the operating system contained in that partition
+
+![alt text](fs-layout.png "fs-layout")
+
+#### 4.3.2 Implementing Files
+
+##### Contiguous Allocation
+
+**Contiguous allocation**: store each file as a contiguous run of disk blocks
+
+Advantages:
+* Simple to implement: only need the disk address of the first block and the number of blocks in the file to keep track of where a file’s blocks
+* The read performance is excellent: only one seek for a read
+
+Drawback:
+* Fragmentation: create a lots of holes which can be too small for a program ti fit in
+* Only works well for fixed files
+
+##### Linked-List Allocation
+
+**Linked-List allocation**: the first word of each block is used as a pointer to the next one. The rest of the block is for data.
+
+Advantages:
+* No fragmentation
+* Only need to store address of the first block
+
+Drawback:
+* Random access is extremely slow because OS has to start at beginning of the list every single time
+
+##### Linked-List Allocation Using a Table in Memory
+
+All link information for each of file is written into the File Allocation Table (FAT) which is located in main memory
+
+Advantages:
+* No fragmentation
+* Random access is much easier comparing to Linked-List Allocation
+
+Drawback:
+* Need to maintain FAT
+* Entire table must be in memory all the time to make it work
+
+##### I-nodes
+
+**I-node** (**index-node**): lists the attributes and disk addresses of the file’s blocks. Therefore, with a given the i-node, it is possible to find all the blocks of the file. The last block can be used to link to another i-node, hence files can be as big as needed.
+
+Advantages:
+* No fragmentation
+* Only need one i-node in memory if a file is opened
+* Far smaller size than FAT
+* Disproportional with disk size
+
+#### 4.3.3 Implementing Directories
+
+**Design 1**: a directory consists of a list of fixed-size entries, one per file, containing a (fixed-length) file name, a structure of the file attributes, and one or more disk addresses (up to some maximum) telling where the disk blocks are.
+
+**Design 2**: using i-node, a directory consists of a name and a pointer to corresponding i-node.
+
+How to handle long file name? There are three approaches
+1. Set a limit on file name
+	Wastinng memory since not all file will have that length
+2. All directory entries are start with length of the entry followed by data with fixed format
+	Leads to fragmentation because deleting a file means creating a hole (same as contiguous disk files)
+3. Make the directory entries all fixed length and keep the files names together in a heap at the end of the directory
+
+#### 4.3.4 Shared Files
+
+When several users are working together on a project, they often need to share files. As a result, it is often convenient for a shared file to appear simultaneously in different directories belonging to different users.
+
+A problem with shared file:
+* Assume a shared file shared with user B and user C.
+* Then file information must be saved in both directory B and directory C.
+* If user B modifies shared file, only B can see changes, thus defeating the purpose of sharing.
+
+Solutions:
+1. Disk blocks information for a file are not saved in the directory but in i-node.
+2. A system create a symbolic link to a shared file. The new file contains the path name of the shared file
+
+Both have some drawbacks
+
+##### With i-node:
+
+1. Problem 1:
+	* At the moment that B links to the shared file, the i-node records the file’s owner as C
+	* If C then tries to remove the file it removes the file and clears the i-node. Hence B point to an invalid i-node
+	* If the i-node is later reassigned to another file, B’s link will point to the wrong file
+2. Problem 2: A solution for the previous problem is to have the system check the number of user for a file in i-node. If the number of user is = 0, just delete it. If it > 0, remove link for C but keep link for B. Still have a problem
+	* Since the file is created by C, C is the owner.
+	* C will continue to be billed for the file even if he doesn't need it and C can't stop that except have B delete it for him
+
+##### Symbolic links: 
+
+The previous problem does not occur with symbolic links since only real owner has pointer to the i-node. But it requires extra overhead for getting a path, parsing it, and maintaining an extra block for i-node for each link.
+
+#### 4.3.5 Log-Structured File Systems
+
