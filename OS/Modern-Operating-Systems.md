@@ -970,3 +970,103 @@ The previous problem does not occur with symbolic links since only real owner ha
 
 #### 4.3.5 Log-Structured File Systems
 
+**Log-Structured File Systems** is a kind of file system that is designed to improve access time to files.
+
+Log-structured file systems are based on the assumption that files are cached in main memory.
+
+As a result, disk traffic will become dominated by writes. 
+
+HOW LSF works:
+* All writes are initially buffered in memory
+* Periodically, all the buffered writes are written to the disk in a single segment, at the end of the log.
+* A single segment contains i-nodes, directory blocks, and data blocks, all mixed together so LSF uses those information to write to disk
+
+LFS uses a data structure called an i-node map to maintain the current location of each i-node.
+
+Once a existing file is open for update, a segment of the file is load to the memory 
+
+#### 4.3.6 Journaling File Systems
+
+In JFS, the OS keeps track of what the FS is going to do before it does which means that the OS have a set of FS's planned works. Hence if the system crashes before the FS finish it job, the OS will look at the journal and finish planned job in the next reboot.
+
+
+### 4.4 FILE-SYSTEM MANAGEMENT AND OPTIMIZATION
+
+#### 4.4.1 Disk-Space Management
+
+##### Block size
+
+As discussed above, storing files in segments gives the OS some flexibilities but just as in page table, determining block size is also important
+
+If block size is too small, wasting time for seeking and rotation delay. If block size is too big, internal fragmentation or wasting space.
+
+Formula for calculating time to read a file of `k` bytes, `B` block size, rotation time `R` msec, and avg seek time `S`:
+
+```
+	S + R/2 + round( k/B ) * R
+```
+
+##### Keeping Track of Free Blocks
+
+Two ways to manage free blocks:
+* As linked list
+* As bit map
+
+###### Linked list
+
+How it works:
+* When the free list method is used, only one block of pointers need be kept in main memory.
+* When a file is created, the needed block blocks are taken from the block of pointers.
+* When it runs out a new block of pointer is read in from the disk.
+* When a file is deleted, its blocks are freed and added to the block of pointer in the main memory.
+
+With a 1-KB block, a 32-bit disk block number, and 16 GB disk:
+* A block can hold 8 * 2^10 / 32 = 256 -1 = 255 free blocks
+* There are 2^34/2^10 = 2^24 KB disk blocks
+* 2^24/255 = 65794 blocks  to hold free block numbers
+* Need 65794 KB 
+
+###### Bitmap
+
+A disk with n block requires a bitmap with n bits. A free blocks are represented by 1s in the map, allocated blocks by 0 (or vice versa).
+
+With a 1-KB block, and 16 GB disk:
+* There are 2^34/2^10 = 2^24 KB disk blocks
+* Need 2^24 (bits) = 2^24 / 2^3 (bytes) = 2^11 * 2^10 (bytes) = 2^11 KB => 2^11 blocks
+* Need 2^11 KB
+
+#### 4.4.2 File-System Backups
+
+File Backup System design issues
+1. Should the entire file system be backed up or only part of it?
+2. it is wasteful to back up files that have not changed since the last backup
+3. Since big amount of data are typically dumped, it may be desirable to compress the data before writing them to tape.
+4. It is difficult to perform a backup on an active file system – making rapid snapshots of the file system.
+5. Backup introduces many nontechnical problems into an organization – security problem
+
+There are two strategies for dumping a disk to tape or disk: 
+* Physical and 
+* Logical Dump
+
+##### Physical Dump
+
+A **physical dump** starts at block 0 of the disk, writes all the disk blocks onto the output disk in order, and stops when it has copied the last one.
+
+Advantages: easy to implement
+
+Disadvantages: inability to skip selected directories, make incremental dumps, and restore individual files upon request
+
+##### Logical Dump
+
+A **logical dump** starts at one or more specified directories and recursively dumps all files and directories found there that have changed since some given base date.
+
+The dump algorithm maintains a bitmap indexed by i-node number with several bits per i-node The algorithm operates in four phases
+
+* Phase 1
+	Begins at the starting directory and examines all the entries in it. For each modified file, its i-node is marked in the bitmap. Each directory is also marked and recursively inspected.
+* Phase 2
+	Unmarking any directories that have no modified files or directories in them or under them.
+* Phase 3
+	All marked directory is dumped
+* Phase 4
+	All marked files is dumped
