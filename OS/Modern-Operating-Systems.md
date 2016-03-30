@@ -807,6 +807,7 @@ How it works:
 ## Chapter 4: FILE SYSTEMS
 
 Three essential requirements for long-term information storage:
+
 1. It must be possible to store a very large amount of information.
 2. The information must survive the termination of the process using it
 3. Multiple processes must be able to access the information at once
@@ -848,10 +849,11 @@ Two types of regular files:
 
 #### 4.1.4 File Access
 
-**Sequential access**:
+**Sequential access** :
 	* A process can read all the bytes in a file in order, starting from the beginning. 
 	* Cannot read out of order
-**Random Access**:
+
+**Random Access** :
 	* A process can read all the bytes in a file in any order. 
 
 ### 4.2 DIRECTORIES
@@ -873,6 +875,7 @@ Most disk can be divided into partitions with different file system. Sector 0 of
 The end of the MBR contains the **partition table**. This table gives the starting and ending addresses of each partition. Only one partition can be active at a time.
 
 When the computer is booted:
+
 1. The BIOS reads in and executes the MBR
 2. MBR locates the active partition, read in its first block, which is called the **boot block**, and execute it.
 3. The program in the boot block loads the operating system contained in that partition
@@ -932,7 +935,8 @@ Advantages:
 
 **Design 2**: using i-node, a directory consists of a name and a pointer to corresponding i-node.
 
-How to handle long file name? There are three approaches
+How to handle long file name? There are three approaches:
+
 1. Set a limit on file name
 	Wastinng memory since not all file will have that length
 2. All directory entries are start with length of the entry followed by data with fixed format
@@ -949,6 +953,7 @@ A problem with shared file:
 * If user B modifies shared file, only B can see changes, thus defeating the purpose of sharing.
 
 Solutions:
+
 1. Disk blocks information for a file are not saved in the directory but in i-node.
 2. A system create a symbolic link to a shared file. The new file contains the path name of the shared file
 
@@ -958,7 +963,7 @@ Both have some drawbacks
 
 1. Problem 1:
 	* At the moment that B links to the shared file, the i-node records the file’s owner as C
-	* If C then tries to remove the file it removes the file and clears the i-node. Hence B point to an invalid i-node
+	* If C then tries to remove the file, it removes the file and clears the i-node. Hence B point to an invalid i-node
 	* If the i-node is later reassigned to another file, B’s link will point to the wrong file
 2. Problem 2: A solution for the previous problem is to have the system check the number of user for a file in i-node. If the number of user is = 0, just delete it. If it > 0, remove link for C but keep link for B. Still have a problem
 	* Since the file is created by C, C is the owner.
@@ -976,7 +981,7 @@ Log-structured file systems are based on the assumption that files are cached in
 
 As a result, disk traffic will become dominated by writes. 
 
-HOW LSF works:
+How LSF works:
 * All writes are initially buffered in memory
 * Periodically, all the buffered writes are written to the disk in a single segment, at the end of the log.
 * A single segment contains i-nodes, directory blocks, and data blocks, all mixed together so LSF uses those information to write to disk
