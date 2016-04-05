@@ -1075,3 +1075,182 @@ The dump algorithm maintains a bitmap indexed by i-node number with several bits
 	All marked directory is dumped
 * Phase 4
 	All marked files is dumped
+
+## Chapter 6
+
+### 6.1 RESOURCES
+
+#### 6.1.1 Preemptable and Nonpreemptable Resources
+
+A **preemptable resource** is one that can be taken away from the process owning it with no ill effects.
+
+A **nonpreemptable resource**, in contrast, is one that cannot be taken away from its current owner without potentially causing failure. 
+
+In general, deadlocks involve nonpreemptable resources because deadlocks caused preemptable resource can be solved by reallocating resources from a process to another process.
+
+The abstract sequence of events required to use a resource:
+1. Request the resource.
+2. Use the resource.
+3. Release the resource.
+
+### 6.2 INTRODUCTION TO DEADLOCKS
+
+**Deadlock**: A set of processes is deadlocked if each process in the set is waiting for an
+event that only another process in the set can cause.
+
+#### 6.2.1 Conditions for Resource Deadlocks
+
+Four conditions for deadlocks:
+
+1. Mutual exclusion condition. 
+
+	Each resource is either currently assigned to exactly one process or is available.
+
+2. Hold-and-wait condition. 
+
+	Processes currently holding resources that were granted earlier can request new resources.
+
+3. No-preemption condition. 
+
+	Resources previously granted cannot be forcibly taken away from a process. They must be explicitly released by the process holding them.
+
+4. Circular wait condition. 
+
+	There must be a circular list of two or more processes, each of which is waiting for a resource held by the next member of the chain. 
+
+All four of these conditions must be present for a resource deadlock to occur. If one of them is absent, no resource deadlock is possible.
+
+In general, four strategies are used for dealing with deadlocks:
+
+1. Just ignore the problem. Maybe if you ignore it, it will ignore you.
+2. Detection and recovery. Let them occur, detect them, and take action.
+3. Dynamic avoidance by careful resource allocation.
+4. Prevention, by structurally negating one of the four conditions.
+
+### 6.3 THE OSTRICH ALGORITHM
+
+Stick your head in the sand and pretend there is no problem. (hilarious)
+
+### 6.4 DEADLOCK DETECTION AND RECOVERY
+
+#### 6.4.1 Deadlock Detection with One Resource of Each Type
+
+Deadlock detection with one resource of each type is simple by using a resource allocation graph which can be used to identify circle (deadlock)
+
+Example:
+1. Process A holds R and wants S.
+2. Process B holds nothing but wants T.
+3. Process C holds nothing but wants S.
+4. Process D holds U and wants S and T.
+5. Process E holds T and wants V.
+6. Process F holds W and wants S.
+7. Process G holds V and wants U.
+
+We will have a graph like this
+
+![alt text](deadlock-one.png "Deadlock graph")
+
+From the directed graph on the left we can see that there is a cycle which means a deadlock.
+
+#### 6.4.2 Deadlock Detection with Multiple Resources of Each Type
+
+When there are multiple resources, directed graph will be not enough, so a resource matrix is used in this situation.
+
+![alt text](deadlock-matrix.png "Deadlock matrix")
+
+Each process is initially said to be unmarked.As the algorithm progresses, processes will be marked, indicating that they are able to complete and are thus not deadlocked. When the algorithm terminates, any unmarked processes are known to be deadlocked. 
+
+The deadlock detection algorithm:
+1. Look for an unmarked process, Pi, for which the ith row of R is less than or equal to A.
+2. If such a process is found, add the ith row of C to A, mark the process, and go back to step 1.
+3. If no such process exists, the algorithm terminates.
+
+#### 6.4.3 Recovery from Deadlock
+
+##### Recovery through Preemption
+
+In some cases it may be possible to temporarily take a resource away from its current owner and give it to another process. In many cases, manual intervention may be required, especially in batch-processing operating systems running on mainframes.
+
+##### Recovery through Rollback
+
+If the system designers and machine operators know that deadlocks are likely, they can arrange to have processes **checkpointed** periodically.
+
+To be most effective, new checkpoints should not overwrite old ones but should be written to new files, so as the process executes, a whole sequence accumulates.
+
+##### Recovery through Killing Processes
+
+### 6.5 DEADLOCK AVOIDANCE
+
+The system must be able to decide whether granting a resource is safe or not and make the allocation only when it is safe. Thus, the question arises: Is there an algorithm that can always avoid deadlock by making the right choice all the time?
+
+#### 6.5.1 Resource Trajectories
+
+#### 6.5.2 Safe and Unsafe States
+
+A state is said to be **safe** if there is some scheduling order in which every process can run to completion even if all of them suddenly request their maximum number of resources immediately.
+
+Safe state:
+
+![alt text](safe-state.png "Safe State")
+
+Unsafe state (b):
+
+![alt text](unsafe-state.png "Unsafe State")
+
+#### 6.5.3 The Banker’s Algorithm for a Single Resource
+
+Like above. The idea is that OS can reserve less resource than needed by all processes and carefully allocate them to prevent deadlock
+
+#### 6.5.4 The Banker’s Algorithm for Multiple Resources
+
+Instead of having one matrix, in this case, we need two matrixes just like in deadlock detection with multiple resources.
+
+The algorithm for checking to see if a state is safe:
+
+1. Look for a row, R, whose unmet resource needs are all smaller than or equal to A. If no such row exists, the system will eventually deadlock since no process can run to completion (assuming processes keep all resources until they exit).
+2. Assume the process of the chosen row requests all the resources it needs (which is guaranteed to be possible) and finishes. Mark that process as terminated and add all of its resources to the A vector.
+3. Repeat steps 1 and 2 until either all processes are marked terminated (in which case the initial state was safe) or no process is left whose resource needs can be met (in which case the system was not safe).
+
+### 6.6 DEADLOCK PREVENTION
+
+#### 6.6.1 Attacking the Mutual-Exclusion Condition
+
+#### 6.6.2 Attacking the Hold-and-Wait Condition
+
+##### Approach 1
+
+* Each process requests all resources, before starting execution.
+* If everything is available, all resources (requested by the process) are located and finish its job.
+* If some resources are not available, no resources are located to the process.
+
+Problems:
+* Processes do not know what and how much they need.
+* Resources cannot be used optimally.
+
+##### Approach 2
+
+* Allows a process to request resources only when the process has none
+* To get a new resource, first, release all the resources currently holds and request all at time same time
+
+Problems:
+* Stavation is possible
+
+#### 6.6.3 Attacking the No-Preemption Condition
+
+##### Approach 1
+
+* A process that is holding resources that is needed by another process and that process cannot be allocated, it will be preempted to release holding resources.
+* A process will be restart only if there is enough resources.
+
+#### 6.6.4 Attacking the Circular Wait Condition
+
+##### Approach 1
+
+* A process can only hold one resource
+* If it needs another one, it must release the first one first.
+
+##### Approach 1
+
+* Having an ordered list of resources
+* A process can request resources whenever they want, but all requests must made in numerical
+order.
