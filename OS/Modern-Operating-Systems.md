@@ -684,6 +684,7 @@ Job sequence:
 #### 3.5.2 Stack Algorithm
 
 A paging system can be characterized by three items:
+
 1. The reference string of the executing process
 2. The page replacement algorithm
 3. The number of page frames available in memory
@@ -695,6 +696,7 @@ How **Stack Algorithm** works:
 * Bottom n - m entries contains all the pages that have been referenced once but have been page out and are not currently in memory
 
 **Stack Algorithm** in action:
+
 1. When a page is referenced, it is always moved to the top entry in M.
 2. If the page referenced was already in M, all pages above it move down one position.
 3. A transition from within the box to outside of it corresponds to a page being evicted from the memory
@@ -740,11 +742,11 @@ If the page size is too small:
 Overhead and optimal page size:
 
 ```
-	Overhead = **s****e**/**p** + **p**/2
+	Overhead = s * e / p + p/2
 
-	Overhead' = - **s** **e**/**p**^2 + 1/2 = 0
+	Overhead' = - s * e / p^2 + 1/2 = 0
 
-	Optimal page size = sqrt(2**s** **e**)
+	Optimal page size = sqrt(2 * s * e)
 
 ```
 
@@ -752,7 +754,7 @@ Average process size: **s**
 
 Page size: **p**
 
-Page entry: **e**
+Page entry size: **e**
 
 Number of pages needed per process: **s**/**p**
 
@@ -792,6 +794,7 @@ If the segments are large, it may be inconvenient, or even impossible, to keep t
 To keep track of all segment OS uses segment table which contains **segment descriptor**. Segment descriptor contains address to the page table, segment length (in pages), and several other infomation.
 
 So a virtual address for this requires 3 things:
+
 1. Segment number
 2. Page number  
 3. Offset within page
@@ -850,11 +853,11 @@ Two types of regular files:
 #### 4.1.4 File Access
 
 **Sequential access** :
-	* A process can read all the bytes in a file in order, starting from the beginning. 
-	* Cannot read out of order
+* A process can read all the bytes in a file in order, starting from the beginning. 
+* Cannot read out of order
 
 **Random Access** :
-	* A process can read all the bytes in a file in any order. 
+* A process can read all the bytes in a file in any order. 
 
 ### 4.2 DIRECTORIES
 
@@ -1037,7 +1040,7 @@ A disk with n block requires a bitmap with n bits. A free blocks are represented
 
 With a 1-KB block, and 16 GB disk:
 * There are 2^34/2^10 = 2^24 KB disk blocks
-* Need 2^24 (bits) = 2^24 / 2^3 (bytes) = 2^11 * 2^10 (bytes) = 2^11 KB => 2^11 blocks
+* Need 2^24 (bits) = 2^24 / 2^3 (bytes) = 2^11 * 2^10 (bytes) = 2^11 KB
 * Need 2^11 KB
 
 #### 4.4.2 File-System Backups
@@ -1138,6 +1141,7 @@ Stick your head in the sand and pretend there is no problem. (hilarious)
 Deadlock detection with one resource of each type is simple by using a resource allocation graph which can be used to identify circle (deadlock)
 
 Example:
+
 1. Process A holds R and wants S.
 2. Process B holds nothing but wants T.
 3. Process C holds nothing but wants S.
