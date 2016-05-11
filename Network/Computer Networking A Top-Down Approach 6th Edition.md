@@ -1662,3 +1662,128 @@ Since `W` increase linearly (1 MSS per RTT), we have:
 ```
 
 Which: the loss rate (L), the round-trip time (RTT), and the maximum segment size (MSS)
+
+# Chapter 4: The network layer
+
+## 4.1
+
+### 4.1.1 Forwarding and Routing
+
+Two important functionalities of network-layer:
+* Forwarding. When a packet arrives at a router’s input link, the router must move the packet to the appropriate output link.
+* Routing. The network layer must determine the route or path taken by packets as they flow from a sender to a receiver
+
+### 4.1.2 Network Service Models
+
+Services that could be provided by the network layer:
+* Guaranteed delivery
+* Guaranteed delivery with bounded delay
+
+Services could be provided to a flow of packets between a given source and destination:
+* In-order packet delivery
+* Guaranteed minimal bandwidth
+* Guaranteed maximum jitter
+* Security services
+
+Internet's network layer implementation is the best-effort service which only provide minimal services.
+
+## 4.2 Virtual Circuit and Datagram Networks
+
+Differences between network layer and transport layer:
+* **Network layer** provides host-to-host services while **transport layer** provides process-process services.
+
+**Virtual-circuit (VC) networks**: networks that provide only a connection service at the network layer.
+
+**Datagram networks**: networks that provide only a connectionless service.
+
+### 4.2.1 Virtual-Circuit Networks
+
+A **VC** consists of:
+
+1. A path
+2. VC numbers, one number for each link along the path
+3. Entries in the forwarding table in each router along the path
+
+A packet belong to a virtual circuit carries a VC number in its header. Virtual circuit can have different VC number for each link so router must replace the packet VC number by a new one from forwarding table.
+
+Why shouldn't keep the same VC number on each of the links along its route:
+* Replacing the number from link to link reduces the length of the VC field in the packet header
+* Switches will have to exchange and process a substantial number of messages to agree on a common VC number 
+
+In a VC network, the network’s routers must maintain **connection state** information for the ongoing connections. So if a new connection is established, a new entry has to be added in the forwarding table ad removed when the connection is released.
+
+Three identifiable phases in a virtual circuit:
+* VC setup
+* Data transport
+* VC tear downn
+
+Im VC network layer, routers along the path between the two end systems are involved in VC setup, and each router is fully aware of all the VCs passing through it.
+
+**Signaling messages**: messages that the end systems send into the network to initiate or terminate a VC, and the messages passed between the routers to set up the VC.
+
+**Signaling protocols**: protocol to exchange signaling messages.
+
+### 4.2.2 Datagram Networks
+
+In datagram network, each time an end system wants to send a packet:
+
+1. It stamps the packet with destination ip address
+2. Pops the packet into the network
+
+Hence, datagram network does not need to setup connection and maintain it.
+
+When a packet arrives at a router, the router uses the packet’s destination address to look up the appropriate output link interface in the forwarding table.
+
+**Example**:
+
+There is a router with the following forwarding table:
+
+| Prefix Match Link          | Interface |
+|----------------------------|-----------|
+| 11001000 00010111 00010    | 0         |
+| 11001000 00010111 00011000 | 1         |
+| 11001000 00010111 00011    | 2         |
+| otherwise                  | 3         |
+
+So, when a packet arrives, the router will use *8longest prefix matching rule** to determine which link it should go to.
+
+In **datagram netowork**, the forwarding table is updated every one-to-five minutes while in **virtual circuit**, it is updated whenever a connection is established or torn down.
+
+Since the forwarding table in datagram network can be updated anytime, a serie of packets can go into different paths and arrive out of order.
+
+## 4.3 What’s Inside a Router?
+
+Four router components can be identified in router architecture:
+* Input ports
+* Switching fabric
+* Output ports
+* Routing processor
+
+# TODO: add
+
+## 4.5 Routing Algorithms
+
+Ways to classify routing algorithms:
+
+1. According to whether they are global or decentralized.
+	* A **global routing algorithm** computes the least-cost path between a source and destination using complete, global knowledge about the network using **link-state (LS) algorithms**
+	* In a **decentralized routing algorithm**, the calculation of the least-cost path is carried out in an iterative, distributed manner. No node has complete information about the costs of all network links. Instead, each node begins with only the knowledge of the costs of its own directly attached links.
+2. According to whether they are static or dynamic
+	* **Static routing algorithms**, the calculation of the least-cost path based on assumption that routes change very slowly over time, often as a result of human intervention
+	* **Dynamic routing algorithms** change the routing paths as the network traffic loads or topology change. 
+3. According to whether they are loadsensitive or load-insensitive
+	* **Load-sensitive algorithm**: link costs vary dynamically to reflect the current level of congestion in the underlying link. If a high cost is associated with a link that is currently congested, a routing algorithm will tend to choose routes around such a congested link.
+
+### 4.5.1 The Link-State (LS) Routing Algorithm
+
+In a link-state algorithm, the network topology and all link costs are known.
+
+# TODO
+
+### 4.5.2 The Distance-Vector (DV) Routing Algorithm
+
+The **distancevector (DV) algorithm** is iterative, asynchronous, and distributed:
+* **iterative**: This process continues on until no more information is exchanged between neighbors.
+* **asynchronous**: it does not require all of the nodes to operate in lockstep with each other
+* **distributed**: each node receives some information from one or more of its directly attached neighbors, performs a calculation, and then distributes the results of its calculation back to its neighbors.
+
