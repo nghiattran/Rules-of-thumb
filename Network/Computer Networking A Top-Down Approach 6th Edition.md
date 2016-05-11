@@ -1759,7 +1759,126 @@ Four router components can be identified in router architecture:
 * Output ports
 * Routing processor
 
-# TODO: add
+### 4.3.1 Input ports
+
+### 4.3.2 Switching
+
+Switching can be done in several ways:
+* Switching via memory:
+	* A packet arrives at input port will trigger an interupt signal on the routing processor.
+	* The packet then will be copied into memory.
+	* The routing processor then extracts destination address from the header, looks up an appropriate output port, and copies the packet from memory to output port buffer.
+
+* Switching via a bus:
+	* A packet is transfered to output port over a shared bus without routing processor intervention.
+	* The input port label and packet and then transmit it to all output port but only the one that matches the label will keep and packet and forward it.
+
+* Switching via an interconnection network
+	* To overcome the limitation of a shared bus (only one packet can be transger at a time), this approach uses interconnection of busses.
+
+### 4.3.3 Output Processing
+
+Switch ---> Queuing ---> Data link processing ---> Line termination
+
+### 4.3.4 Where Does Queueing Occur?
+
+**Buffering** required when datagrams arrive from fabric faster than the transmission rate.
+**Head-of-the-line (HOL) blocking**: phenomenon that a packet at the head of the line blocks all packets behind from being transmitted even though transmittion can be done.
+
+Formulars for determining size of buffer:
+
+```
+Buffer's size = RTT * C  (RFC 3439)
+
+Buffer's size = RTT * C / sqrt(N) (RFC 3439)
+```
+
+RTT: round trip time
+
+C: link capacity
+
+N: number os flows
+
+## 4.4 The Internet Protocol (IP): Forwarding and Addressing in the Internet
+
+### 4.4.1 Datagram Format
+
+#### Data fragment
+
+Data fragment is needed when the datagram is too big to be handled (bigger than maximum transmisstion unit (MTU)). In this case, datagram will be divided into fragments and then reassambled at the destination.
+
+How data fragment works:
+* A datagram of 4000 bytes (20 bytes header and 3900 bytes data) arrives at a router with MTU of 1500 bytes. So the datagram must be splitted into round(4000/1500) = 3 fragments.
+* Assume the original datagram identification is 777.
+
+![alt text](datagram-fragment.png "Datagram Fragment")
+
+### 4.4.2 IPv4 Addressing
+
+Each IP address is 32 bits long (equivalently, 4 bytes), and there are thus a total of 232 possible IP addresses
+
+The boundary between the host and the physical link is called an **interface**.
+
+IP addressing assigns an address to a subnet: 223.1.1.0/24, where the /24 notation, sometimes known as a subnet mask, indicates that the leftmost 24 bits of the 32-bit quantity define the subnet address.
+
+Subnet addressing, the 32-bit IP address is divided into two parts and again has the dotted-decimal form a.b.c.d/x, where x indicates the number of bits in the first part of the address.
+
+#### Obtaining a Host Address: the Dynamic Host Configuration Protocol
+
+Host addresses can also be configured manually, but more often this task is now done using the Dynamic Host Configuration Protocol (DHCP)
+
+DHCP senerio: 
+
+1. DHCP discovery: a newly arrived host send datagrams with destination of 255.255.255.255 and source of 0.0.0.0 to all nodes attached to the subnet that is it attached to.
+2. DHCP server offer(s): A DHCP server receiving a DHCP discover message responds to the client with a DHCP offer message that is broadcast to all nodes on the subnet, again using the IP broadcast address of 255.255.255.255
+3. DHCP request. The newly arriving client will choose from among one or more server offers and respond to its selected offer with a DHCP request message, echoing back the configuration parameters.
+4. DHCP ACK. The server responds to the DHCP request message with a DHCP ACK message, confirming the requested parameters.
+
+#### Network Address Translation (NAT)
+
+Network Address Translation replaces all ip addresses of its sending client by a single ip address but with a different port number so that number of possible host can be > number of ip address, inpparticularly number of address * number of port.
+
+NAT requirements:
+* Replace outgoing datagram addresses.
+* Remember every source IP address and port number and NAT IP address and port number pair.
+* Replace incomming datagram addresses with actual source addresses.
+
+NAT problems:
+* Port number should only be used to indicate process addresses, not host addresses.
+* Hosts should be talking directly to each other without modify addresses.
+* Should use IPv6 instead.
+* NAT traversal problem
+	* Since hosts that are behind NAT are invisible. It is difficult for another host that wants to connect to a host that is behind NAT.
+
+### 4.4.3 Internet Control Message Protocol (ICMP)
+
+### 4.4.4 IPv6
+
+Differences between IPv4 and IPv6:
+* Address length IPv4 has 32 bit address length and 128 for IPv6.
+* Identification field: 4 bits vs 6 bits
+* IPv6 has fixed length 40 bytes header
+* No fragmantation at intermediate routers
+
+#### Transitioning from IPv4 to IPv6
+
+##### Option one: Flag day
+
+**Flag day** a given time and date when all Internet machines would be turned off and upgraded from IPv4 to IPv6. 
+
+Impossible since it requires tremendous amount of administrators and user acting collaboratively.
+
+##### Option two: dual-stack
+
+Routers must be able to handle IPv4 and IPv6 accordingly. 
+
+Problems:
+* If you hosts support different IP versions
+* Even when 2 hosts support IPv6, if the intermidiate nodes only support IPv4, some fields in IPv6 will be dropped.
+
+##### Option three: tunneling 
+
+To solve the problem above, with tunneling approach, hosts that support IPv6 will put the IPv6 datagram into data field of IPv4 so that it can be transmitted through all IPv4 nodes without losses and then the destination host will extract IPv6 datagram from the IPv4 datagram.
 
 ## 4.5 Routing Algorithms
 
@@ -1782,8 +1901,284 @@ In a link-state algorithm, the network topology and all link costs are known.
 
 ### 4.5.2 The Distance-Vector (DV) Routing Algorithm
 
-The **distancevector (DV) algorithm** is iterative, asynchronous, and distributed:
+The **distance vector (DV) algorithm** is iterative, asynchronous, and distributed:
 * **iterative**: This process continues on until no more information is exchanged between neighbors.
 * **asynchronous**: it does not require all of the nodes to operate in lockstep with each other
 * **distributed**: each node receives some information from one or more of its directly attached neighbors, performs a calculation, and then distributes the results of its calculation back to its neighbors.
 
+### 4.5.3 Hierarchical Routing
+
+## 4.6 Routing in the Internet
+
+### 4.6.1 Intra-AS Routing in the Internet: RIP
+
+**Intra-AS** (Intra autonomous system) routing protocols are also known as **interior gateway protocols**.
+
+Two routing protocols have been used extensively for routing within an autonomous system in the Internet: 
+* The Routing Information Protocol (RIP)
+* Open Shortest Path First (OSPF)
+
+# TODO 
+
+## 4.7 Broadcast and Multicast Routing
+
+**Broadcast routing** the network layer provides a service of delivering a packet sent from a source node to all other nodes in the network (one to all).
+
+**Multicast routing** enables a single source node to send a copy of a packet to a subset of the other network nodes (one to some).
+
+### 4.7.1 Broadcast Routing Algorithms
+
+#### First approach
+
+Given N nodes in network, the source node make N copies and of the packet but with different destination addresses and then send them ti appropriate host (**N-way-unicast**)
+
+Problems:
+* Inefficiency
+
+#### Uncontrolled Flooding
+
+**Flooding** is an approach in which the source node sends a copy of the packet to all of its neighbors (except the one that it received the packet).
+
+Uncontrolled Flooding has a fatal flaw that if there is a circle in the network, it will run indefinitely. 
+
+#### Controlled Flooding
+
+Techniques to control when to flood:
+
+##### 1. Sequence-number-controlled flooding
+
+* A source put its address and broadcase sequence number into broadcast packet and sends to its neighbors.
+* The receiving node first check if any of its neighbors' address is in the list and sends the packet to nodes that are not in the list
+
+##### 2. Reverse path forwarding (RPF)
+
+* A packet is only forwarded if the receiving node gets the packget from its closet node.
+
+#### Spanning-Tree Broadcast
+
+Choose a center node and other nodes will send a unicast packet to it to construct the spanning tree
+
+## 4.7.2 Multicast
+
+### Multicast Routing Algorithms
+
+#### Multicast routing using a group-shared tree: one tree per source
+
+* Shortest path trees (Dijkstra’s algorithm)
+* Reverse path forwarding
+
+#### Multicast routing using a source-based tree: group uses one tree
+
+* Minimal spanning (Steiner) 
+* Center-based trees
+
+### Multicast Routing in the Internet
+
+#### Distance vector multicast routing protocol
+
+Distance vector multicast routing protocol (DVMRP)
+
+# Chapter 5 Link layer
+
+## 5.1 Introduction
+
+### 5.1.1 The Services Provided by the Link Layer
+
+Possible services that can be offered by a link-layer protocol include:
+
+* Framing: 
+* Link access: A medium access control (MAC) protocol specifies the rules by which a frame is transmitted onto the link.
+* Reliable delivery: When a link-layer protocol provides reliable delivery service, it guarantees to move each network-layer datagram across the link without error.
+* Error detection and correction
+
+### 5.1.2 Where Is the Link Layer Implemented?
+
+For the most part, the link layer is implemented in a network adapter, also sometimes known as a network interface card (NIC).
+
+## 5.2 Error-Detection and -Correction Techniques
+
+### 5.2.1 Parity Checks
+
+In an even parity scheme, the sender simply includes one additional bit and chooses its value such that the total number of 1s in the d + 1 bits is even.
+
+For odd parity schemes, the parity bit value is chosen such that there is an odd number of 1s.
+
+For error recovering, we can use two-dimension parity as illustated below.
+
+![alt text](two-dimension-parity.png "two-dimension-parity")
+
+By using two-dimension even parity, we can detect the bit at position (2,2) is corrupted and fix it by replace by a 1.
+
+Two-dimension parity can also detect 2-bit errors but not coorect.
+
+The ability of the receiver to both detect and correct errors is known as **forward error correction (FEC)**
+
+### 5.2.2 Checksumming Methods
+
+One simple checksumming method is to simply sum these k-bit integers and use the resulting sum as the error-detection bits. 
+
+### 5.2.3 Cyclic Redundancy Check (CRC)
+
+**Cyclic redundancy check (CRC)** codes are also known as polynomial codes, since it is possible to view the bit string to be sent as a polynomial whose coefficients are the 0 and 1 values in the bit string, with operations on the bit string interpreted as polynomial arithmetic.
+
+CRC codes operate as follows:
+* Consider the d-bit piece of data, D, that the sending node wants to send to the receiving node.
+* The sender and receiver must first agree on an r + 1 bit pattern, known as a generator, which we will denote as G (the most significant (leftmost) bit of G be a 1)
+* For a given piece of data, D, the sender will choose r additional bits, R, and append them to D such that the resulting d + r bit pattern is exactly divisible by G using modulo-2 arithmetic.
+* The receiver divides the d + r received bits by G. If the remainder is nonzero, the receiver knows that an error has occurred; otherwise the data is accepted as being correct.
+
+Formular:
+
+```
+R = remainder(D * 2 ^ r / G)
+```
+
+## 5.3 Multiple Access Links and Protocols 
+
+There are two types of network links:
+
+1. Point-to-point links 
+
+	* A single sender at one end of the link and a single receiver at the other end of the link
+
+2. Broadcast links
+
+	* Multiple sending and receiving nodes all connected to the same, single, shared broadcast channel.
+	* When any one node transmits a frame, the channel broadcasts the frame and each of the other nodes receives a copy
+
+We can classify any multiple access protocol as belonging to one of three categories: 
+* Channel partitioning protocols, 
+* Random access protocols, and 
+* Taking-turns protocols.
+
+Desirable characteristics for broadcast channel  of rate R bits per second:
+
+1. When only one node has data to send, that node has a throughput of R bps.
+2. When M nodes have data to send, each of these nodes has a throughput of R/M bps. This need not necessarily imply that each of the M nodes always has an instantaneous rate of R/M, but rather that each node should have an average transmission rate of R/M over some suitably defined interval
+of time.
+3. The protocol is decentralized; that is, there is no master node that represents a
+single point of failure for the network.
+4. The protocol is simple, so that it is inexpensive to implement
+
+### 5.3.1 Channel Partitioning Protocols
+
+Channel partitioning protocols:
+* Time division multiplexing (TDM)
+* Frequency division multiplexing (FDM)
+* Code division multiple access (CDMA)
+	* CDMA assigns a different code to each node
+	* Each node then uses its unique code to encode the data bits it sends
+
+
+### 5.3.2 Random Access Protocols
+
+In a random access protocol, a transmitting node always transmits at the full rate of the channel, namely, R bps. When there is a collision, each node involved in the collision repeatedly retransmits its frame *after a random delay* until it gets the frame without collision.
+
+Each node involved in a collision chooses independent random delays.
+
+#### Slotted ALOHA
+
+Assumptions:
+
+• All frames consist of exactly L bits.
+• Time is divided into slots of size L/R seconds (that is, a slot equals the time to
+transmit one frame).
+• Nodes start to transmit frames only at the beginnings of slots.
+• The nodes are synchronized so that each node knows when the slots begin.
+• If two or more frames collide in a slot, then all the nodes detect the collision
+event before the slot ends
+
+The operation of slotted ALOHA:
+* When the node has a fresh frame to send, it waits until the beginning of the next slot and transmits the entire frame in the slot.
+* If there isn’t a collision, the node has successfully transmitted its frame and thus need not consider retransmitting the frame. 
+* If there is a collision, the node detects the collision before the end of the slot. The node retransmits its frame in each subsequent slot with probability p until the frame is transmitted without a collision.
+
+Problems when there are multiple active hosts:
+* A certain fraction of the slots will have collisions and will therefore be wasted.
+* Another fraction of the slots will be empty because all active nodes refrain from transmitting as a result of the probabilistic transmission policy
+
+Suppose there are N nodes. The probability a given node has a success is p(1 - p)^( N - 1). Because there are N nodes, the probability that any one of the N nodes has a success is N*p(1 - p)^( N - 1).
+
+To obtain the maximum efficiency for N active nodes, we have to find the p* that maximizes this expression.
+And we find that lim(N*p(1 - p)^( N - 1)) when N --> infinity is 0.37
+
+#### Aloha
+
+Pure Aloha is simpler and has no synchronization.
+
+Efficiency is 0.18
+
+#### Carrier Sense Multiple Access (CSMA)
+
+Two important rules for polite human conversation:
+* Listen before speaking. If someone else is speaking, wait until they are finished. In the networking world, this is called **carrier sensing**
+* If someone else begins talking at the same time, stop talking. In the networking world, this is called **collision detection**
+
+Collisions still happen because of propagation delay. Host A broadcasts first but the signal has not reached B yet. B senses that the channel is idle and starts broadcasting ==> collides with host A.
+
+#### Carrier Sense Multiple Access with Collision Dection (CSMA/CD)
+
+Have an adapter in each node to detect collisiona, abort broadcasting, and wait for a random time to start again.
+
+```
+Efficiency = 1/ (1 + 5 d prop / d trans)
+```
+
+### 5.3.3 Taking-Turns Protocols
+
+#### Polling protocol
+
+The polling protocol requires one of the nodes to be designated as a master node. The master node polls each of the nodes in a round-robin fashion. 
+
+In particular, the master node first sends a message to node 1, saying that it (node 1) can transmit up to some maximum number of frames. After node 1 transmits some frames, the master node tells node 2 it (node 2) can transmit up to the maximum number of frames. (The master node can determine when a node has finished sending its frames by observing the lack of a signal on the channel.) The procedure continues in this manner, with the master node polling each of the nodes in a cyclic manner.
+
+Drawbacks:
+* Polling delay—the amount of time required to notify a node that it can transmit.
+* If the master node fails, the entire channel becomes inoperative.
+
+#### Token-passing protocol
+
+In Token-passing protocol, a small, special-purpose frame known as a token is exchanged among the nodes in some fixed order
+
+When a node receives a token, it holds onto the token only if it has some frames to transmit; otherwise, it immediately forwards the token to the next node. If a node does have frames to transmit when it receives the token, it sends up to a maximum number of frames and then forwards the token to the next node.
+
+Drawbacks:
+* Failure of one node can crash the entire channel.
+* If a node accidentally neglects to release the token, then some recovery procedure must be invoked to get the token back in circulation.
+
+## 5.4 Switched Local Area Networks
+
+### 5.4.1 Link-Layer Addressing and ARP
+
+Hosts and routers have link-layer addresses.
+
+#### MAC Addresses
+
+A link-layer address is variously called a **LAN address**, a physical address, or a **MAC address**.
+
+MAC address is 6 bytes long, giving 248 possible MAC addresses. MAC addresses don't change.
+
+#### Address Resolution Protocol (ARP)
+
+Each host and router has a **ARP table** in its memory that keep tracks of hosts IP addresses and MAC addresses.
+
+If a host wants to send a datagram to a host with an IP address or MAC address, it boradcasts ARP packet to query the receiving host location and perform transmittion.
+
+### 5.4.2 Ethernet
+
+#### Ethernet CSMA/CD algorithm
+
+## TODO
+
+### 5.4.3 Link-Layer Switches
+
+#### Forwarding and Filtering
+
+**Filtering** is the switch function that determines whether a frame should be forwarded to some interface or should just be dropped. 
+
+**Forwarding** is the switch function that determines the interfaces to which a frame should be directed, and then moves the frame to those interfaces. 
+
+An entry in the switch table contains:
+1. A MAC address
+2. The switch interface that leads toward that MAC address
+3. The time at which the entry was placed in the table
