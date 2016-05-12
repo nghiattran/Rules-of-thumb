@@ -143,9 +143,10 @@ Delay formula
 > d(end-to-end) = (N-1)*L/R + L/R = N*L/R
 
 Which:
-	**N**: number of links or packages.
-	**L**: length.
-	**R**: tranmission rate.
+* **N**: number of links or packages.
+* **L**: length.
+* **R**: tranmission rate.
+
 
 `(N-1)*L/R` are the time it takes to transmit N packages and `L/R` for forwarding delay.
 
@@ -1036,7 +1037,7 @@ There is another type of DNS called **local DNS server**, which does not belong 
 Each ISP has a local DNS server. When a host connects to an ISP, the ISP provides the host with the IP addresses of one or more of its local DNS servers. 
 
 Example: 
-Suppose the host cis.poly.edu desires the IP address of gaia.cs.umass.edu and  Polytechnic’s local DNS server is called dns.poly.edu and that an authoritative DNS server for gaia.cs.umass.edu is called dns.umass.edu. 
+Suppose the host cis.poly.edu desires the IP address of gaia.cs.umass.edu, Polytechnic’s local DNS server is called dns.poly.edu, and the authoritative DNS server for gaia.cs.umass.edu is called dns.umass.edu. 
 
 1. The host cis.poly.edu first a DNS query message to its local DNS server, dns.poly.edu.
 2. The local DNS server forwards the query message to a root DNS server.
@@ -1213,7 +1214,9 @@ Transport protocols run in end systems:
 #### How Multiplexing and Demultiplexing work
 
 Transport-layer multiplexing requires:
+
 1. Sockets have unique identifiers
+
 2. Each segment have special fields that indicate the socket to which the segment is to be delivered
 
 From those requirements, when a host receive a datagram, the demultiplexer will examinize the datagram's header to find out which port should handle the request.
@@ -1442,7 +1445,7 @@ Typical K is 0.125
 
 #### Setting and Managing the Retransmission Timeout Interval
 
-Clearly, the interval should be greater than or equal to `EstimatedRTT`, or unnecessary retransmissions would be sent. Also, the interval should not be too much larger than `EstimatedRTT`, otherwise, when a segment is lost.
+Clearly, the interval should be greater than or equal to `EstimatedRTT`, or unnecessary retransmissions would be sent. Also, the interval should not be too much larger than `EstimatedRTT`.
 
 Formula for calculating timeout:
 
@@ -1454,7 +1457,7 @@ Formula for calculating timeout:
 	DevRTT = (1 – L) * DevRTT + L * | SampleRTT – EstimatedRTT |
 ```
 
-An initial TimeoutInterval value of 1 second is recommended.
+An initial `TimeoutInterval` value of 1 second is recommended.
 
 When a timeout occurs, the value of `TimeoutInterval` is doubled to avoid a premature timeout occurring for a subsequent segments.
 
@@ -1481,7 +1484,7 @@ Example:
 * Then Host B sends receive window in ACK to host A
 * Host A make sure the sending data is less than rwnd, and sends the next segment
 
-Since TCP ensure the buffer will not be overflowed, we have:
+Since TCP ensures the buffer will not be overflowed, we have:
 
 ```
 	LastByteRcvd – LastByteRead <= RcvBuffer
@@ -1520,7 +1523,7 @@ To tear down connection:
 
 As the name describes, there are two senders, and a receiver with infinite buffer R transmission rate.
 
-Since there are two sender, each sender's transmission rate is from 0 - R/2. So, if a sender can send with > R/2 tranmission rate, only R/2 is received by receiver. fom this perspective, transmission rate >= R/2 is desirable since it means receiver's utility rate is 100%.
+Since there are two sender, each sender's transmission rate is from 0 - R/2. So, if a sender can send with > R/2 tranmission rate, only R/2 is received by receiver. From this perspective, transmission rate >= R/2 is desirable since it means receiver's utility rate is 100%.
 
 On the other hand, since receiver can only handle R/2, if a sender sends > R/2, we will experience infinite delay.
 
@@ -1745,7 +1748,7 @@ There is a router with the following forwarding table:
 | 11001000 00010111 00011    | 2         |
 | otherwise                  | 3         |
 
-So, when a packet arrives, the router will use *8longest prefix matching rule** to determine which link it should go to.
+So, when a packet arrives, the router will use **longest prefix matching rule** to determine which link it should go to.
 
 In **datagram netowork**, the forwarding table is updated every one-to-five minutes while in **virtual circuit**, it is updated whenever a connection is established or torn down.
 
@@ -1759,7 +1762,7 @@ Four router components can be identified in router architecture:
 * Output ports
 * Routing processor
 
-### 4.3.1 Input ports
+### 4.3.1 Input Processing
 
 ### 4.3.2 Switching
 
@@ -1783,6 +1786,10 @@ Switch ---> Queuing ---> Data link processing ---> Line termination
 ### 4.3.4 Where Does Queueing Occur?
 
 **Buffering** required when datagrams arrive from fabric faster than the transmission rate.
+
+**Packet scheduler**: the unit that chooses one packet among those queued for transmission. This selection
+might be done by first-come-first-served (FCFS) scheduling, weighted fair queuing (WFQ), or another one.
+
 **Head-of-the-line (HOL) blocking**: phenomenon that a packet at the head of the line blocks all packets behind from being transmitted even though transmittion can be done.
 
 Formulars for determining size of buffer:
@@ -1790,7 +1797,9 @@ Formulars for determining size of buffer:
 ```
 Buffer's size = RTT * C  (RFC 3439)
 
-Buffer's size = RTT * C / sqrt(N) (RFC 3439)
+or
+
+Buffer's size = RTT * C / sqrt(N) (recently)
 ```
 
 RTT: round trip time
@@ -1930,7 +1939,7 @@ Two routing protocols have been used extensively for routing within an autonomou
 
 #### First approach
 
-Given N nodes in network, the source node make N copies and of the packet but with different destination addresses and then send them ti appropriate host (**N-way-unicast**)
+Given N nodes in network, the source node make N copies and of the packet but with different destination addresses and then send them to appropriate host (**N-way-unicast**)
 
 Problems:
 * Inefficiency
@@ -2009,7 +2018,7 @@ For error recovering, we can use two-dimension parity as illustated below.
 
 By using two-dimension even parity, we can detect the bit at position (2,2) is corrupted and fix it by replace by a 1.
 
-Two-dimension parity can also detect 2-bit errors but not coorect.
+Two-dimension parity can also detect 2-bit errors but not correct.
 
 The ability of the receiver to both detect and correct errors is known as **forward error correction (FEC)**
 
@@ -2080,13 +2089,11 @@ Each node involved in a collision chooses independent random delays.
 
 Assumptions:
 
-• All frames consist of exactly L bits.
-• Time is divided into slots of size L/R seconds (that is, a slot equals the time to
-transmit one frame).
-• Nodes start to transmit frames only at the beginnings of slots.
-• The nodes are synchronized so that each node knows when the slots begin.
-• If two or more frames collide in a slot, then all the nodes detect the collision
-event before the slot ends
+* All frames consist of exactly L bits.
+* Time is divided into slots of size L/R seconds (that is, a slot equals the time to transmit one frame).
+* Nodes start to transmit frames only at the beginnings of slots.
+* The nodes are synchronized so that each node knows when the slots begin.
+* If two or more frames collide in a slot, then all the nodes detect the collision event before the slot ends
 
 The operation of slotted ALOHA:
 * When the node has a fresh frame to send, it waits until the beginning of the next slot and transmits the entire frame in the slot.
@@ -2156,13 +2163,17 @@ Hosts and routers have link-layer addresses.
 
 A link-layer address is variously called a **LAN address**, a physical address, or a **MAC address**.
 
-MAC address is 6 bytes long, giving 248 possible MAC addresses. MAC addresses don't change.
+MAC address is 6 bytes long, giving 2^48 possible MAC addresses. MAC addresses don't change.
 
 #### Address Resolution Protocol (ARP)
 
 Each host and router has a **ARP table** in its memory that keep tracks of hosts IP addresses and MAC addresses.
 
-If a host wants to send a datagram to a host with an IP address or MAC address, it boradcasts ARP packet to query the receiving host location and perform transmittion.
+If a host wants to send a datagram to a host with an IP address or MAC address, it boradcasts ARP packet to query the receiving host location. The destination host receives the ARP packet and replies with its MAC address.
+
+**Soft state**: information that times out (goes away) unless refreshed.
+
+ARP is **plug-and-play** since it doesn't need netword administrator's intervention.
 
 ### 5.4.2 Ethernet
 
@@ -2182,3 +2193,42 @@ An entry in the switch table contains:
 1. A MAC address
 2. The switch interface that leads toward that MAC address
 3. The time at which the entry was placed in the table
+
+Suppose a frame with destination address DD-DD-DD-DD-DD-DD arrives at the switch on interface x:
+* If there is no entry for the destination address, the switch broadcasts the frame.
+* If there is an entry for address DD-DD-DD-DD-DD-DD and interface x, discard the frame.
+* If there is an entry for address DD-DD-DD-DD-DD-DD but different interface, the switch performs its forwarding function by putting the frame in an output buffer that precedes interface y.
+
+#### Self-Learning
+
+Switch deletes an address in the table if no frames are received with that address as the source address after some period of time (the aging time).  
+
+#### Properties of Link-Layer Switching
+
+* Elimination of collisions: In a LAN built from switches (and without hubs), there is no wasted bandwidth due to collisions.
+* Heterogeneous links: Because a switch isolates one link from another, the different links in the LAN can operate at different speeds and can run over different media.
+* Management: 
+
+#### Switches Versus Routers
+
+Switches:
+* Using MAC addresses
+* A layer-2 packet switch
+* Maintains switch tables, implements filtering and learning algorithms 
+
+Routers:
+* Using network-layer addresses
+* A layer-3 packet switch
+* Maintains routing tables, implements routing algorithms
+
+### 5.4.4 Point to Point Data Link Control
+
+One sender, one receiver, one link: easier than broadcast link
+
+Design requirements:
+* Packet framing: encapsulation of network-layer datagram in data link frame
+* Bit transparency: must carry any bit pattern in the data field
+* Error detection (no correction)
+* Connection liveness: detect, signal link failure to network layer
+* Network layer address negotiation: endpoint can learn/configure each other’s network address
+
