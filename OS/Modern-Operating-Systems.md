@@ -1079,6 +1079,357 @@ The dump algorithm maintains a bitmap indexed by i-node number with several bits
 * Phase 4
 	All marked files is dumped
 
+## Chapter 5
+
+### 5.1 PRINCIPLES OF I/O HARDWARE
+
+#### 5.1.1 I/O Devices
+
+I/O devices can be divided into two categories:
+
+1. Block devices:
+
+	* Stores information in fixed-size blocks, each one with its own address.
+	* All transfers are in units of one or more entire (consecutive) blocks.
+	* It is possible to read or write each block independently of all the other ones.
+	* Need seek operation before read or write operation
+
+2. Character devices:
+
+	* Delivers or accepts a stream of characters, without regard to any block structure.
+	* It is not addressable and does not have any seek operation
+
+Some devices do not fit in two group listed above.
+
+#### 5.1.2 Device Controllers
+
+I/O units often consist of a mechanical component and an electronic component (**device controller** or **adapter**).
+
+A device's controller plays an important role in the operation of that device; it functions as a bridge between the device and the operating system.
+
+Each device controller has a local buffer and a command register. It communicates with the CPU by interrupts.
+
+How a device controller works:
+* The Device Controller receives the data from a connected device and stores it in local buffer inside the controller. 
+* Then it communicates the data with a Device Driver.
+* For each device controller there is an equivalent device driver which is the standard interface through which the device controller communicates with the Operating Systems through interrupts.
+
+#### 5.1.3 Memory-Mapped I/O
+
+Each controller has a few registers used for communicating with CPU.
+
+By writing into these registers, OS can command the device to:
+* To deliver data (write)
+* To accept data (read)
+* To switch itself on or off
+
+By reading from these registers, OS can learn:
+* What is the device state
+* Whether it is ready to accept new command or not
+
+In addition to the control registers, many devices have a data buffer that the operating system can read and write.
+
+The issue thus arises of how the CPU communicates with the control registers and also with the device data buffers. There are two approaches:
+
+1. Non Memory-Mapped I/O
+2. Memory-Mapped I/O
+
+##### Non Memory-Mapped I/O
+
+Each control register is assigned an I/O port number (8 bit or 16 bit number)
+
+The set of all the I/O ports form the I/O port space, only the OS can access it.
+
+By using special I/O instruction, the CPU can read in control register and can write the content of a register
+
+In this scheme, the address spaces for memory and I/O are different
+
+##### Memory-Mapped I/O
+
+Map all the control registers into the memory space. Each control register is assigned a unique memory address to which no memory is assigned
+
+The assigned addresses are usually at the top of the address space.
+
+When the CPU wants to read a word, either from memory or from an I/O port:
+* The CPU puts the address on the bus’s address line
+* Every memory module and every I/O device compares the address lines to the range of addresses that it services
+* If the address falls in its range, it responds to the request. Since no address is ever assigned to both memory and an I/O device, there is no ambiguity and no conflict.
+
+
+###### Hybrid
+
+Using memory-mapped I/O data buffers and separate I/O ports for the control registers
+
+When the CPU wants to read a word, either from memory or from an I/O port:
+* The CPU puts the address on the bus’s address line
+* Then, asserts a read signal on the bus’s control line to tell whether I/O space or memory space is needed.
+* Either I/O device or memory responds to the request based on the second signal line.
+
+![alt text](io-schemes.png "io-schemes")
+
+Advantages:
+* With memory-mapped I/O high level language can be used to write an I/O device driver, otherwise,  some assembly code is needed.
+* No special protection mechanism is needed to keep user processes from performing I/O.
+* Every instruction that can reference memory can also reference control registers. Hence, it is faster in execution.
+
+Disadvantages:
+* Caching in nowaday computers can create problems.
+* The trend in modern PC is to have a dedicated high-speed memory bus between memory but I/O devices have no way of seeing memory addresses as they go by on the memory bus. Hence, an extra mechanism is needed.
+
+
+#### 5.1.4 Direct Memory Access
+
+No matter whether a CPU does or does not have memory-mapped I/O, it needs to address the device controllers to exchange data with them. The CPU can request data from an I/O controller one byte at a time, but doing so wastes the CPU’s time, so a different scheme, called **DMA (Direct Memory Access)** is often used.
+
+Disk read from Disk to Memory without DMA controller:
+1. The disk controller reads data bit by bit from the disk until an entire block is in the controller’s buffer.
+2. It checks checksum to verify any error.
+3. If there is no error, controller causes an interrupt to get a service from operating system.
+4. The service transfer data from controller’s buffer to main memory through bus line
+
+
+When DMA is used:
+1. The CPU programs the DMA controller by setting its registers so it knows what to transfer and where to transfer to. It also issues a command to the disk controller telling it to read data from the disk into its internal buffer and verify the checksum.
+2. The DMA controller initiates the transfer by issuing a read request over the bus to the disk controller
+3. Transfer data
+4. When it completes transfering, the disk controller sends an acknowledgement signal to the DMA controller. It also increments memory address to use and decrements the byte count. If byte count still > 0, repeat from step 2 to step 4.
+
+![alt text](DMA.png "AMD")
+
+I/O device interupts:
+* When a I/O device finishes its job, it sends a signal for interrupt service through bus line.
+* This signal is detected by the interrupt controller chip on the parentboard.
+* If no other interrupt are pending, the interrupt controller processes the interrupt immediately.
+* If interrupt controller is busy handling another interrupt, the device is just ignored for the moment and continues to assert an interrupt signal on the bus until it is serviced by the CPU.
+* Interrupt controller sends a signal to the CPU causes it to stop what it is doing and start to handle the interrupt. The number on the address lines is used to index the **interrupt vector**.
+* Interrupt vector has pointers where interrupt service procedures are located.
+* Program counter saves the location where the interrupt service procedure is located.
+* Shortly after it starts running, the interrupt service procedure acknowledges the interrupt by writing a certain value to one of the interrupt controller’s I/O ports which tells the controller that it is free to issue another interrupt.
+
+### 5.2 PRINCIPLES OF I/O SOFTWARE
+
+#### 5.2.1 Goals of the I/O Software
+
+Goals:
+* Device independence: write programs that can access any I/O device without having to specify the device in advance
+* Uniform naming: the name of a file or a device should simply be a string or an integer and not depend on
+the device in any way
+* Error handling: 
+
+	* Error must be handled as close to the hardware possible.
+	* That means I/O error must by detected by controller or device itself.
+
+* Synchronous (blocking) vs. asynchronous (interrupt-driven) transfers
+* Buffering: For some devices, data cannot be stored directly in its final destination. It must be
+saved in a buffer and check error or decoded proper form.
+* Sharable vs. Dedicated Device I/O Software: 
+
+There are three fundamentally different ways that I/O can be performed: 
+1. Programmed I/O
+2. Interrupt-Driven I/O
+3. I/O using DMA
+
+#### 5.2.2 Programmed I/O
+
+How it works, considering you want to print the eight-character string "ABCDEFGH" on the printer via a serial interface:
+1. The software assembles the string in a buffer in user space
+2. The user process then acquires the printer for writing by making a system call to open it.
+
+	* If printer is currently in use by another process, this call will fail and return an error code or will block until the printer is available
+
+3. Once it has the printer, the user process makes a system call telling the operating system to print the string on the printer.
+4. The operating system then (usually) copies the buffer with the string to an array, say, `p`, in kernel space, where it is more easily accessed
+5. It then checks to see if the printer is currently available. If not, it waits until it is.
+6. As soon as the printer is available, the operating system copies the first character to the printer’s data register (the character might not appear yet because some printer buffers a whole line or page before printing)
+7. Operating system waits for the printer to become ready again to print another one and repeat steps 6,7 until the end of the string.
+
+Programmable view of the procedure:
+
+```c++
+copy from user(buffer, p, count); 					/* p is the ker nel buffer */
+for (i = 0; i < count; i++) { 							/* loop on every character */
+	while (*printer_status_reg != READY) ; 		/* loop until ready */
+	*printer_data_register = p[i]; 						/* output one character */
+}
+return_to_user( );
+```
+
+Programmed I/O is simple but has the disadvantage of tying up the CPU full time until all the I/O is done.
+
+#### 5.2.3 Interrupt-Driven I/O
+
+Print on a printer that does not buffer characters but prints each one as it arrives.
+
+**Interrupt-Driven I/O** lets the CPU to do something else while waiting for the I/O device to becomes ready.
+
+Programmable view of the procedure:
+
+Code executed at the time the print system call is made:
+```c++
+copy_from_user(buffer, p, count);
+enable_interrupts( );
+while (*printer_status+reg != READY);
+*printer_data_register = p[0];
+scheduler( );
+```
+
+Interrupt service procedure for the printer.
+```c++
+if (count == 0) {
+	unblock user( );
+} else {
+	*printer_data_register = p[i];
+	count = count − 1;
+	i = i + 1;
+}
+acknowledge_interrupt( );
+return_from_interrupt( );
+```
+
+#### 5.2.4 I/O Using DMA
+
+An obvious disadvantage of interrupt-driven I/O is that an interrupt occurs on every character. Interrupts take time, so this scheme wastes a certain amount of CPU time. A solution is to use DMA.
+
+In essence, **DMA** is **programmed I/O**, only with the DMA controller doing all the work, instead of the main CPU so it needs requires special hardware (the DMA controller) but frees up the CPU during the I/O to do other work.
+
+Code executed at the time the print system call is made:
+```c++
+copy_from_userbuffer, p, count);
+set_up_DMA_controller( );
+scheduler( );
+```
+
+Interrupt service procedure for the printer.
+```c++
+acknowledge_interrupt( );
+unblock_user( );
+return_from_interrupt( );
+```
+
+The big win with DMA is reducing the number of interrupts from one per character to one per buffer printed.
+
+On the other hand, the DMA controller is usually much slower than the main CPU.
+
+### 5.3 I/O SOFTWARE LAYERS
+
+I/O software is typically organized in four layers:
+
+![alt text](io-layers.png "io-layers")
+
+#### 5.3.1 Interrupt Handlers
+
+Steps for Interrupt handler:
+1. Save any registers (including the PSW) that have not already been saved by the interrupt hardware.
+2. Set up a context for the interrupt-service procedure. Doing this may involve setting up the TLB, MMU and a page table.
+3. Set up a stack for the interrupt service-procedure.
+4. Acknowledge the interrupt controller. If there is no centralized interrupt controller, reenable interrupts.
+5. Copy the registers from where they were saved (possibly some stack) to the process table.
+6. Run the interrupt-service procedure. It will extract information from the interrupting device controller’s registers.
+7. Choose which process to run next. If the interrupt has caused some high-priority process that was blocked to become ready, it may be chosen to run now.
+8. Set up the MMU context for the process to run next. Some TLB setup may also be needed.
+9. Load the new process’ registers, including its PSW.
+10. Start running the new process.
+
+#### 5.3.2 Device Drivers
+
+Each I/O device attached to a computer needs some device-specific code, called **device driver**, for controlling it. 
+
+Device driver: 
+* Is generally written by the device’s manufacturer and delivered along with the device
+* Is the interface between OS and a I/O controller.
+* In order to access the device’s hardware, each of device deriver has to be part of the operating system kernel. But, it is still possible to construct a driver which run in user’s space, with system calls for reading and writing the device registers.
+
+**Standard interfaces**: a number of procedures that the rest of the OS can call to get the deriver to do work for it.
+
+An OS with a single binary program (UNIX) that contain all of device driver need to be recompile if a new driver is added.
+
+Operating systems usually classify drivers into one of a small number of categories:
+* Block devices
+* Character devices
+
+### 5.4 DISKS
+
+Disks come in a variety of types:
+* Magnetic hard disks: reads and writes are equally fast, which makes them suitable as secondary memory
+* Optical disks
+* Solid-state disks
+
+#### 5.4.1 Disk Hardware
+
+##### Magnetic Disks
+
+Magnetic disks are organized into cylinders, each one containing as many tracks as there are heads stacked vertically. The tracks are divided into sectors, with the number of sectors around the circumference typically being 8 to 32 on floppy disks, and up to several hundred on hard disks. The number of heads varies
+from 1 to about 16.
+
+We can convert a logical block number into an disk address that consists of a cylinder number, a track number and a sector number
+
+#### 5.4.2 Disk Formatting
+
+The format consists of a series of concentric tracks, each tack containing sectors, with short gaps between sectors
+
+The format of a sector: 
+
+1. Preamble – start with a bit pattern which contains the cylinder number, sector number, and other information
+2. Data – size of data portion is determined by formatting program (usually 512 bytes).
+3. ECC (error correcting code) – information used for error correction.
+
+#### 5.4.3 Disk Arm Scheduling Algorithms
+
+The time required is determined by three factors:
+
+1. Seek time (the time to move the arm to the proper cylinder).
+2. Rotational delay (how long for the proper sector to appear under the reading head).
+3. Actual data transfer time
+
+For most disks, the seek time dominates the other two times, so reducing the mean seek time can improve system performance substantially.
+
+##### FCFS –First Come First Serve
+
+Requests come in order:  98, 183, 37, 122, 14, 124, 65, and 67. The disk head is initially at cylinder 53
+
+![alt text](diskscheduling-fcfs.png "fcfs")
+
+FCFS : 98, 183, 37, 122, 14, 124, 65, 67
+
+Total Head movement = |98 - 53| + |183 - 98| + |37 - 183| + |122 - 37| + |14 - 122| + |124 - 14| + |65 -124| + |67 - 65| = 640
+
+#### Shortest-Seek-Time-First (SSTF) 
+
+Serve closest to the current location.
+
+![alt text](diskscheduling-sstf.png "sstf")
+
+SSTF : 65, 67, 37, 14, 98, 122, 124, 183
+
+Total Head movement = |65-53| + |67-65| + |37-67| + |14-37| + |98-14| + |122-98| + |124-122| + |183-124| = 236
+
+#### Elevator Scheduling (SCAN) 
+
+The disk arm starts at one end of the disk, and moves toward the other end.
+
+![alt text](diskscheduling-scan.png "diskscheduling-scan")
+
+SCAN: 37, 14, 0, 65, 67, 98, 122, 124, 183
+Total Head movement = |37-53| + |14-37| + |0-14| + |65-0| + |67-65| + |98-67| + |122-98| + |124-122| + |183-124|
+
+#### C-SCAN
+
+Move the head from one end of disk to the other. When the head reaches the other end, it immediately return to the beginning of the disk without servicing any request on the return trip.
+
+![alt text](diskscheduling-scan.png "diskscheduling-cscan")
+
+CSCAN: 65, 67, 98, 122, 124, 183, 199, 0, 14, 37
+
+#### LOOK
+
+Both Elevator and C-SCAN move the disk arm across the full width of the disk. More commonly, the arm goes only as far as the final request in each direction, then it reverses direction immediately without going all the way to the end of the disk.
+
+The versions of SCAN and C-SCAN algorithm are called LOOK and C-LOOK
+
+### 5.4.4 Error Handling
+
+**Bad sectors**: sectors that do not correctly read back the value just written to them.
+
 ## Chapter 6
 
 ### 6.1 RESOURCES
