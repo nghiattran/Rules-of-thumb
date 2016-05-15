@@ -823,7 +823,7 @@ Advantages:
 
 Drawback:
 * Fragmentation: create a lots of holes which can be too small for a program ti fit in
-* Only works well for fixed files
+* Only works well for fixed size files
 
 ##### Linked-List Allocation
 
@@ -866,10 +866,8 @@ Advantages:
 
 How to handle long file name? There are three approaches:
 
-1. Set a limit on file name
-	Wastinng memory since not all file will have that length
-2. All directory entries are start with length of the entry followed by data with fixed format
-	Leads to fragmentation because deleting a file means creating a hole (same as contiguous disk files)
+1. Set a limit on file name: Wasting memory since not all file will have that length
+2. All directory entries are start with length of the entry followed by data with fixed format: Leads to fragmentation because deleting a file means creating a hole (same as contiguous disk files)
 3. Make the directory entries all fixed length and keep the files names together in a heap at the end of the directory
 
 #### 4.3.4 Shared Files
@@ -971,7 +969,7 @@ With a 1-KB block, and 16 GB disk:
 
 #### 4.4.2 File-System Backups
 
-File Backup System design issues
+File Backup System design issues:
 1. Should the entire file system be backed up or only part of it?
 2. it is wasteful to back up files that have not changed since the last backup
 3. Since big amount of data are typically dumped, it may be desirable to compress the data before writing them to tape.
@@ -1115,9 +1113,10 @@ Disk read from Disk to Memory without DMA controller:
 
 
 When DMA is used:
+
 1. The CPU programs the DMA controller by setting its registers so it knows what to transfer and where to transfer to. It also issues a command to the disk controller telling it to read data from the disk into its internal buffer and verify the checksum.
-2. The DMA controller initiates the transfer by issuing a read request over the bus to the disk controller
-3. Transfer data
+2. The DMA controller initiates the transfer by issuing a read request over the bus to the disk controller.
+3. Transfer data.
 4. When it completes transfering, the disk controller sends an acknowledgement signal to the DMA controller. It also increments memory address to use and decrements the byte count. If byte count still > 0, repeat from step 2 to step 4.
 
 ![alt text](DMA.png "AMD")
@@ -1141,10 +1140,8 @@ Goals:
 * Uniform naming: the name of a file or a device should simply be a string or an integer and not depend on
 the device in any way
 * Error handling: 
-
 	* Error must be handled as close to the hardware possible.
 	* That means I/O error must by detected by controller or device itself.
-
 * Synchronous (blocking) vs. asynchronous (interrupt-driven) transfers
 * Buffering: For some devices, data cannot be stored directly in its final destination. It must be
 saved in a buffer and check error or decoded proper form.
@@ -1158,11 +1155,10 @@ There are three fundamentally different ways that I/O can be performed:
 #### 5.2.2 Programmed I/O
 
 How it works, considering you want to print the eight-character string "ABCDEFGH" on the printer via a serial interface:
+
 1. The software assembles the string in a buffer in user space
 2. The user process then acquires the printer for writing by making a system call to open it.
-
 	* If printer is currently in use by another process, this call will fail and return an error code or will block until the printer is available
-
 3. Once it has the printer, the user process makes a system call telling the operating system to print the string on the printer.
 4. The operating system then (usually) copies the buffer with the string to an array, say, `p`, in kernel space, where it is more easily accessed
 5. It then checks to see if the printer is currently available. If not, it waits until it is.
@@ -1172,7 +1168,7 @@ How it works, considering you want to print the eight-character string "ABCDEFGH
 Programmable view of the procedure:
 
 ```c++
-copy from user(buffer, p, count); 					/* p is the ker nel buffer */
+copy_from_user(buffer, p, count); 					/* p is the ker nel buffer */
 for (i = 0; i < count; i++) { 							/* loop on every character */
 	while (*printer_status_reg != READY) ; 		/* loop until ready */
 	*printer_data_register = p[i]; 						/* output one character */
@@ -1245,6 +1241,7 @@ I/O software is typically organized in four layers:
 #### 5.3.1 Interrupt Handlers
 
 Steps for Interrupt handler:
+
 1. Save any registers (including the PSW) that have not already been saved by the interrupt hardware.
 2. Set up a context for the interrupt-service procedure. Doing this may involve setting up the TLB, MMU and a page table.
 3. Set up a stack for the interrupt service-procedure.
