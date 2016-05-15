@@ -26,6 +26,7 @@ TSL RX,LOCK
 Locking the memory bus is very different from disabling interrupts.
 
 **Disabling interrupts** on processor 1 has no effect at all on processor 2.
+
 **Locking memory bus** does not allow on processors to access the memory.
 
 Use TSL to solve race condition:
@@ -54,14 +55,14 @@ Priority Inversion problem with busy waiting method:
 * The scheduling rules are such that P0 get CPU time whenever it is in ready state.
 * At a time moment, P1 is in critical section.
 * P0 become to ready state. P0 posse CPU time and start to run.
-* Since P1 is in critical section, P0 run busy waiting forever since P1 does not have a chance to get CPU time to finish its critical section.
+* Since P1 is in critical section, P0 runs busy waiting forever since P1 does not have a chance to get CPU time to finish its job.
 
 #### 2.3.4 Sleep and Wakeup
 
 Sleep and wakeup:
 
 * Instead of busy waiting, it goes to sleeping state.
-* Once a process finish its Critical section, it calls wakeup function which allows one of sleeping process get into its critical section.
+* Once a process finish its job in critical section, it calls wakeup function which allows one of sleeping process get into the critical section.
 
 ##### The Producer-Consumer Problem
 
@@ -70,40 +71,35 @@ The **producer-consumer problem** (**bounded-buffer problem**):
 * Two processes share a common, fixed-sized buffer.
 * Producer puts information into the buffer, and consumer takes it out.
 * When the producer wants to put a new item in the buffer, but it is already full.
-
 	* Go to sleep, awakened by customer when customer has removed one or more items
-
 * When the consumer tries to take a item from the buffer, but buffer is already empty.
-
 	* Go to sleep, awakened by producer when producer has puts one or more items into buffer.
 
 ```cpp
-void producer(void)
-{
+void producer(void) {
 	int item;
-	while (TRUE) { 								/* repeat forever */
-		item = produce item( ); 				/* generate next item */
-		if (count == N) sleep( ); 				/* if buffer is full, go to sleep */
-		inser t item(item); 					/* put item in buffer */
-		count = count + 1; 						/* increment count of items in buffer */
+	while (TRUE) { 													/* repeat forever */
+		item = produce_item( ); 							/* generate next item */
+		if (count == N) sleep( ); 						/* if buffer is full, go to sleep */
+		insert_	item(item); 									/* put item in buffer */
+		count = count + 1; 										/* increment count of items in buffer */
 		if (count == 1) wakeup(consumer); 		/* was buffer empty? */
 	}
 }
-void consumer(void)
-{
+
+void consumer(void) {
 	int item;
-	while (TRUE) { 								/* repeat forever */
-		if (count == 0) sleep( ); 				/* if buffer is empty, got to sleep */
-		item = remove item( ); 					/* take item out of buffer */
-		count = count − 1; 						/* decrement count of items in buffer */
-		if (count == N − 1) wakeup(producer); 	/* was buffer full? */
-		consume item(item); 					/* print item */
+	while (TRUE) { 													/* repeat forever */
+		if (count == 0) sleep( ); 						/* if buffer is empty, got to sleep */
+		item = remove_item( ); 								/* take item out of buffer */
+		count = count − 1; 										/* decrement count of items in buffer */
+		if (count == N − 1) wakeup(producer); /* was buffer full? */
+		consume_item(item); 									/* print item */
 	}
 }
 ```
 
 Problems:
-
 1. Initially buffer is empty, `count = 0`.
 2. The consumer just reads `count = 0`, since the consumer’s CPU time is over, scheduler assigns a CPU time to producer.
 3. Producer produces item and checks count, `count = 0`. Insert item to buffer.Increase `count = count +1`. Now, since `count = 1`, it calls wakeup(consumer). Since the consumer is not sleeping yet, consumer misses the wakeup signal.
@@ -111,7 +107,6 @@ Problems:
 5. Producer keep produce items and finally buffer become full. The producer go to sleep. Both sleep forever.
 
 Quick fix by adding wakeup waiting bit:
-
 * When a wakeup is sent to a consumer that is still awake, this bit is set.
 * When the consumer tries to go to sleep:
 	* If the wakeup waiting bit is on, it will be turned off, but the process will stay awake.
@@ -123,13 +118,10 @@ Quick fix by adding wakeup waiting bit:
 Two operations on semaphores (generalizations of **sleep** and **wakeup**):
 
 1. Down
-
 	* Checks to see if the value is greater than 0:
-
 		* If so, it decrements the value (i.e., uses up one stored wakeup) and just continues.
 		* If the value is 0, the process is put to `sleep` without completing the `down` for the moment.
 2. Up 
-
 	* Increments the value of the semaphore addressed.
 	* If one or more processes were sleeping on that semaphore (unable to complete an earlier down operation) one of them is chosen by the system and is allowed to complete its down.
 
@@ -142,28 +134,26 @@ semaphore mutex = 1; 					/* controls access to critical region */
 semaphore empty = N; 					/* counts empty buffer slots */
 semaphore full = 0; 					/* counts full buffer slots */
 
-void producer(void)
-{
+void producer(void) {
 	int item;
-	while (TRUE) { 						/* TRUE is the constant 1 */
-		item = produce item( ); 		/* generate something to put in buffer */
-		down(&empty); 					/* decrement empty count */
-		down(&mutex); 					/* enter critical region */
-		inser t item(item); 			/* put new item in buffer */
-		up(&mutex); 					/* leave critical region */
-		up(&full); 						/* increment count of full slots */
+	while (TRUE) { 								/* TRUE is the constant 1 */
+		item = produce_item( ); 		/* generate something to put in buffer */
+		down(&empty); 							/* decrement empty count */
+		down(&mutex); 							/* enter critical region */
+		insert_item(item); 					/* put new item in buffer */
+		up(&mutex); 								/* leave critical region */
+		up(&full); 									/* increment count of full slots */
 	}	
 }
-void consumer(void)
-{
+void consumer(void) {
 	int item;
-	while (TRUE) {						/* infinite loop */
-		down(&full); 					/* decrement full count */
-		down(&mutex);					/* enter critical region */
-		item = remove item( ); 			/* take item from buffer */
-		up(&mutex); 					/* leave critical region */
-		up(&empty); 					/* increment count of empty slots */
-		consume item(item); 			/* do something with the item */
+	while (TRUE) {								/* infinite loop */
+		down(&full); 								/* decrement full count */
+		down(&mutex);								/* enter critical region */
+		item = remove_item( ); 			/* take item from buffer */
+		up(&mutex); 								/* leave critical region */
+		up(&empty); 								/* increment count of empty slots */
+		consume_item(item); 				/* do something with the item */
 	}
 }
 ```
@@ -175,11 +165,8 @@ void consumer(void)
 > A **mutex** is a shared variable that can be in one of two states: unlocked or locked.
 
 When a thread (or process) needs access to a critical region, it calls **mutex lock**:
-
 * If the mutex is currently unlocked (meaning that the critical region is available), the call succeeds and the calling thread is free to enter the critical region.
-
 * If the mutex is already locked, the calling thread is blocked until the thread in the critical region is finished and calls mutex unlock.
-
 * If multiple threads are blocked on the mutex, one of them is chosen at random and allowed to acquire the lock.
 
 ### 2.3.7 Monitors
@@ -202,15 +189,13 @@ This can cause two active processes at the same time so Hoare and Brinch Hansen 
 When a computer is multiprogrammed, it frequently has multiple processes or threads competing for a CPU at the same time. If only one CPU is available, *scheduler* has to be made which process to run next by using **scheduling algorithm**. 
 
 Three types of schedulers:
-
-* Long-Term Scheduler – Selects a process from the pool of job and load into memory for execution
+* Long-Term Scheduler – selects a process from the pool of job and load into memory for execution
 * Short-term scheduler – selects a process from the ready queue and allocates the CPU.
 * Memory Scheduler – schedule which process is in memory and in disk
 
 ### 2.4.1 Introduction to Scheduling
 
-In addition to picking the right process to run, the scheduler also has to worry about making efficient use of the CPU because process switching is expensive.
-
+In addition to picking the right process to run, the scheduler also has to worry about making efficient use of the CPU because process switching is expensive:
 * First a switch from user mode to kernel mode must occur
 * The state of the current process must be saved, including storing its registers in the process table so they can be reloaded later.
 * A new process must be selected by running the scheduling algorithm.
@@ -225,14 +210,12 @@ Process that spend most of their time computing are called **compute-bound** or 
 ##### When to Schedule
 
 Situations in which scheduling is needed:
-
 1. When a new process is created, a decision needs to be made whether to run the parent process or the child process.
 2. When a process exits, some other process must be chosen from the set of ready processes
 3. When a process blocks on I/O, on a semaphore, or for some other reasons.
 4. When an I/O interrupt occurs.
 
 Two categories of scheduling algorithms with respect to how they deal with clock interrupts:
-
 1. A nonpreemptive scheduling algorithm picks a process to run and then just lets it run until it blocks or voluntarily releases the CPU.
 2. A preemptive scheduling algorithm picks a process and lets it run for a maximum of some fixed time.
 
@@ -241,41 +224,28 @@ Two categories of scheduling algorithms with respect to how they deal with clock
 Different scheduling algorithms are needed in different environments. Three environments worth distinguishing are:
 
 1. Batch:
-
 	* Nonpreemptive algorithms, or preemptive algorithms with long time periods for each process, are often acceptable
 	* Reduces process switches and thus improves performance
-
 2. Interactive:
-
 	* With interactive users, preemption is essential to keep one process from hogging the CPU and denying service to the others
-
 3. Real time:
-
 	* Preemption is, oddly enough, sometimes not needed because the processes know that they may not run for long periods of time and usually do their work and block quickly
 
 ##### Scheduling Algorithm Goals
 
 Some goals for a scheduling algorithm:
-
-* All systems
-
+* All systems:
 	* Fair ness - giving each process a fair share of the CPU
 	* Policy enforcement - seeing that stated policy is carried out
 	* Balance - keeping all parts of the system busy
-
-* Batch systems
-
+* Batch systems:
 	* Throughput - maximize jobs per hour
 	* Turnaround time - minimize time between submission and termination
 	* CPU utilization - keep the CPU busy all the time
-
-* Interactive systems
-
+* Interactive systems:
 	* Response time - respond to requests quickly
 	* Propor tionality - meet users’ expectations
-
-* Real-time systems
-
+* Real-time systems:
 	* Meeting deadlines - avoid losing data
 	* Predictability - avoid quality degradation in multimedia systems
 
@@ -286,12 +256,10 @@ Some goals for a scheduling algorithm:
 Basically, there is a single queue of ready processes. All incomming processes will be push into the queue and executed in order.
 
 Strengths:
-
 * Easy to understand and equally easy to program
 * Fair in the same sense that allocating scarce resources
 
 Weaknesses:
-
 * If some biggest requests come first the average delay will be very high
 
 ##### Shortest Job First
@@ -299,11 +267,9 @@ Weaknesses:
 The scheduler picks the **shortest job first** (the process that can be done in the shortest time)
 
 Strengths:
-
 * Optimal for scheduling.
 
 Weaknesses:
-
 * Very difficult to know the length of CPU request.
 
 It is worth pointing out that shortest job first is optimal only when all the jobs are available simultaneously. Jobs arrive at different time, the scheduler only picks the shortest job available at a time which might not be optimal.
@@ -316,12 +282,10 @@ A preemptive version of shortest job first is **shortest remaining time next**. 
 
 ##### Round-Robin Scheduling
 
-Round-Robin: each process is assigned a time interval, called its **quantum**, during which it is allowed to run. If the process is still running at the end of the quantum, the CPU is preempted and given to another process. If the process has blocked or finished before the quantum has elapsed, the CPU switching is done when the process blocks, of course. 
+**Round-Robin**: each process is assigned a time interval, called its **quantum**, during which it is allowed to run. If the process is still running at the end of the quantum, the CPU is preempted and given to another process. If the process has been blocked or finished before the quantum has elapsed, the CPU switching is done when the process blocks, of course. 
 
-One issue with Round-Robin is the length of quantum. 
-
+One issue with Round-Robin is the length of quantum:
 * If the length of quantum is too short, scheduler has to switch from process to process in a very short period of time and switching operation is both unuseful and resource-consumming.
-
 * If the length of quantum is too long, the whole system will experience delays since other processes have to wait for the running process to finish.
 
 Setting the quantum too short causes too many process switches and lowers the CPU efficiency, but setting it too long may cause poor response to short interactive requests. 
@@ -330,10 +294,9 @@ Setting the quantum too short causes too many process switches and lowers the CP
 
 The basic idea is straightforward: each process is assigned a priority, and the runnable process with the highest priority is allowed to run.
 
-To prevent high-priority processes from running indefinitely, the scheduler may decrease the priority of the currently running process at each clock tick which causes its priority to drop below that of the next highest process, so a process switch occurs.
+To prevent high-priority processes from running indefinitely, the scheduler may decrease the priority of the currently running process at each clock tick which causes its priority to drop below the next highest process's priority, so a process switch will occur.
 
 Ways to define process priority:
-
 * Internal way: based on the measurable quantity or quantities to compute the priority of a process.
 * External way: based on the importance of the process
 
@@ -345,7 +308,7 @@ But it can be solved using **aging**. A aging is a technique of gradually increa
 
 A real-time system is one in which time plays an essential role. Typically, one or more physical devices external to the computer generate stimuli, and the computer must react appropriately to them within a fixed amount of time.
 
-Real-time systems are generally categorized as **hard real time**, meaning there are absolute deadlines that must be met—or else!— and **soft real time**, meaning that missing an occasional deadline is undesirable, but nevertheless tolerable. 
+Real-time systems are generally categorized as **hard real time**, meaning there are absolute deadlines that must be met and **soft real time**, meaning that missing an occasional deadline is undesirable, but nevertheless tolerable. 
 
 The events that a real-time system may have to respond to can be further categorized as **periodic** (meaning they occur at regular intervals) or **aperiodic** (meaning they occur unpredictably).
 
@@ -359,17 +322,13 @@ Where:
 Event **i** occurs with period **Pi** and requires **Ci** sec of CPU time
 
 Real-time scheduling algorithms can be:
-
 * **Static**: make their scheduling decisions before the system starts running
-
 	* Works only when there is perfect information available in advance about the work
-
 * **Dynamic**: make scheduling decisions at run time, after execution has started
 
 ## Chapter 3: MEMORY MANAGEMENT
 
 **Memory hierarchy**:
-
 * Small, fast, very expensive registers,
 * Volatile, expensive cache memory,
 * Megabyte medium-speed, medium-speed RAM
@@ -407,7 +366,6 @@ To solve this problem, the OS will automatically was loaded at address 16,384, 2
 ### 3.2 A MEMORY ABSTRACTION: ADDRESS SPACES
 
 Exposing physical memory to processes has several major drawbacks:
-
 * If user programs can address every byte of memory, they can easily trash the operating system, intentionally or by accident, bringing the system to a grinding halt
 * It is difficult to have multiple programs running at once
 
@@ -425,25 +383,19 @@ When a process is running, the base register is loaded with the physical address
 
 So in the last example, program 1 will have base and limit as 0 and 16,384, respectively, program 2 will have base and limit as 16,384 and 32,768, respectively. So that when the process run `JMP 28` it will be treated as `JMP 16412`.
 
-In practice, the total amount of RAM needed by all the processes is often much more than can fit in
-memory. Keeping all processes in memory all the time requires a huge amount of memory and cannot be done if there is insufficient memory.
+In practice, the total amount of RAM needed by all the processes is often much more than can fit in memory. Keeping all processes in memory all the time requires a huge amount of memory and cannot be done if there is insufficient memory.
 
 Two general approaches to dealing with memory overload:
-
 * **Swapping**: bringing in each process in its entirety, running it for a while, then putting it back on the disk. Idle processes are mostly stored on disk, so they do not take up any memory when they are not running.
 * **Virtual memory**: allows programs to run even when they are only partially in main memory
 
 #### 3.2.2 Swapping
 
 There are two ways to allocate memory:
-
 * **Fixed partition**: For each process, a fixed sized partition will be created in memory.
-
 	* Fixed location, size, and number of processes in memory.
 	* Simple to manage.
-
 * **Variable partition**: 
-
 	* The number, location, and size of the partitions vary dynamically
 	* Need to keep track of partition information dynamically for memory allocation and deallocation
 	* Might create multiple memory holes.
@@ -455,7 +407,6 @@ Since processes usually change theirs size variable partition is needed but it i
 When swapping creates multiple holes in memory, it is possible to combine them all into one big one by moving all the processes downward as far as possible, which is known as **memory compaction**. But it is usually not done because it requires a lot of CPU time.
 
 Solution for glowing space:
-
 * Allocate extra memory for each process
 * Use adjacent hole for managing the growing size
 * If there is not enough room for a process to grow, it will be swapped out for killed.
@@ -463,7 +414,6 @@ Solution for glowing space:
 #### 3.2.3 Managing Free Memory
 
 When memory is assigned dynamically, the operating system must manage it and there are two ways to keep track of memory usage:
-
 * Bitmaps
 * Free lists
 
@@ -472,16 +422,13 @@ When memory is assigned dynamically, the operating system must manage it and the
 With a bitmap, memory is divided into allocation units as small as a few words and as large as several kilobytes. Corresponding to each allocation unit is a bit in the bitmap, which is 0 if the unit is free and 1 if it is occupied. 
 
 Issues with bitmap design:
-
 * The smaller the allocation unit, the larger the bitmap.
 * The larger the allocation unit, the smaller bitmap – But memory may be wasted in the last unit of the process if the process size is not an exact multiple of the allocation unit.
 
 Advantage:
-
 * Simple way to keep track of memory words in a fixed amount of memory
 
 The main problem: 
-
 * To allocate memory for the process with k unit size, the memory manager must search the bitmap to find a run of k consecutive 0 bits in the map and this is a slow operation.
 
 ##### Memory Management with Linked Lists
@@ -489,41 +436,32 @@ The main problem:
 Another way of keeping track of memory is to maintain a linked list of allocated and free memory segments, where a segment either contains a process or is an empty hole between two processes. 
 
 Each entry in the list specifies:
-
 * A hole (H) or process (P)
 * The address at which it starts
 * The length
 * A pointer to the next item.
 
-Advantage: When a process terminates or is swapped out, updating the list is straightforward
+Advantage: 
+* When a process terminates or is swapped out, updating the list is straightforward
 
 When the processes and holes are kept on a list sorted by address, several algorithms can be used to allocate memory for a created:
-
 * **First fit**: 
-	
 	* The memory manager scans along the list of segments until it finds a hole that is big enough.
 	* The hole is then broken up into two pieces, one for the process and one for the unused memory.
 	* Fast because it searches as little as possible.
-
 * **Next fit**:
-	
 	* Like first fit but it starts searching the list from the place where it left off last time instead of always at the beginning, as first fit does.
-
 * **Best fit**:
-
 	* Searches the entire list, from beginning to end, and takes the smallest hole that is adequate.
 	* Slower than the previous two because it has to search the whole list.
 	* Waste more memory because it tends to create tiny, useless hole, while holes in the previous two can be used for short process.
-
 * **Worst fit**:
-
 	* Contrast to best fit, it take the largest available hole, so that the new hole will be big enough to be useful.
 	* Not a very good idea either.
 
 Four algorithms can be speed up by maintaining two lists: 
-
 1. A list for processes: as discussed above.
-2. A list for holes:  can be maintained with sorted by size. Best fit does not need search entire list.
+2. A list for holes: can be maintained with sorted by size. Best fit does not need search entire list.
 
 With a hole list sorted by size, first fit and best fit are equally fast, and next fit is pointless.
 
@@ -533,9 +471,7 @@ Another allocation algorithm is **quick fit**, which maintains separate lists fo
 
 On computers with virtual memory, when a program generate **virtual addresses**, the virtual addresses will be sent to a **MMU (Memory Management Unit)**  that maps the virtual addresses onto the physical memory address.
 
-Example:
-
-A computer generates 16-bit addresses (0 - 64KB). However, this computer only has 32KB of physical memory, so although it can handle 64KB but only 32KB of them can be loaded into memory at a time. Therefore, 64KB has to be written on the disk and devided into small pieces and those pieces can be brought in as needed.
+Example: A computer generates 16-bit addresses (0 - 64KB). However, this computer only has 32KB of physical memory, so although it can handle 64KB but only 32KB of them can be loaded into memory at a time. Therefore, 64KB has to be written on the disk and devided into small pieces and those pieces can be brought in as needed.
 
 The virtual address space consists of fixed-size units called **pages** and corresponding units in the physical memory are called **page frames**. The two are generally the same size. Assume that every page and page frame is 4KB so that we will have 64/4 = 16 pages and 32/4 = 8 page frames
 
@@ -548,7 +484,6 @@ The page number is used as an index into the **page table**.  If the **Present/a
 #### 3.3.2 Page Tables
 
 The mapping of virtual addresses onto physical address:
-
 1. The virtual address is split into a virtual page number and
 2. An offset
 
@@ -568,7 +503,6 @@ A typical page table entry:
 #### 3.3.3 Speeding Up Paging
 
 Two issues which paging:
-
 1. The mapping from virtual address to physical address must be fast.
 2. If the virtual address space is large, the page table will be large.
 
@@ -587,11 +521,7 @@ How TLB works:
 
 ##### Multilevel Page Tables
 
-Example:
-
-We have 32-bit virtual address which is devided into 3 partitions: a 10-bit PT1 field, a 10-bit PT2 field, and a 12-bit Offset.
-
-Since there are 12 bits offset, each page is 4KB and there are 2^10*2^10 = 2^20 of them
+Example: We have 32-bit virtual address which is devided into 3 partitions: a 10-bit PT1 field, a 10-bit PT2 field, and a 12-bit Offset. Since there are 12 bits offset, each page is 4KB and there are 2^10*2^10 = 2^20 of them
 
 The point for having mutiple page table is to avoid keeping all the page table in memory all the time. 
 
@@ -617,12 +547,10 @@ This approach guarantee the optimal solution but impossible most the time since 
 #### 3.4.2 The Not Recently Used Page Replacement Algorithm
 
 To collect useful page usage statistic, we can have two status bits:
-
 * R is set whenever the page is referenced
 * M is set when the page is written to
 
 When a page fault occurs, the operating system inspects all the pages and divides them into four categories based on the current values of their R and M bits:
-
 * Class 0: not referenced, not modified.
 * Class 1: not referenced, modified.
 * Class 2: referenced, not modified.
@@ -684,7 +612,6 @@ Job sequence:
 #### 3.5.2 Stack Algorithm
 
 A paging system can be characterized by three items:
-
 1. The reference string of the executing process
 2. The page replacement algorithm
 3. The number of page frames available in memory
@@ -696,7 +623,6 @@ How **Stack Algorithm** works:
 * Bottom n - m entries contains all the pages that have been referenced once but have been page out and are not currently in memory
 
 **Stack Algorithm** in action:
-
 1. When a page is referenced, it is always moved to the top entry in M.
 2. If the page referenced was already in M, all pages above it move down one position.
 3. A transition from within the box to outside of it corresponds to a page being evicted from the memory
