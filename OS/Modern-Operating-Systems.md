@@ -100,6 +100,7 @@ void consumer(void) {
 ```
 
 Problems:
+
 1. Initially buffer is empty, `count = 0`.
 2. The consumer just reads `count = 0`, since the consumer’s CPU time is over, scheduler assigns a CPU time to producer.
 3. Producer produces item and checks count, `count = 0`. Insert item to buffer.Increase `count = count +1`. Now, since `count = 1`, it calls wakeup(consumer). Since the consumer is not sleeping yet, consumer misses the wakeup signal.
@@ -210,6 +211,7 @@ Process that spend most of their time computing are called **compute-bound** or 
 ##### When to Schedule
 
 Situations in which scheduling is needed:
+
 1. When a new process is created, a decision needs to be made whether to run the parent process or the child process.
 2. When a process exits, some other process must be chosen from the set of ready processes
 3. When a process blocks on I/O, on a semaphore, or for some other reasons.
@@ -503,6 +505,7 @@ A typical page table entry:
 #### 3.3.3 Speeding Up Paging
 
 Two issues which paging:
+
 1. The mapping from virtual address to physical address must be fast.
 2. If the virtual address space is large, the page table will be large.
 
@@ -623,6 +626,7 @@ How **Stack Algorithm** works:
 * Bottom n - m entries contains all the pages that have been referenced once but have been page out and are not currently in memory
 
 **Stack Algorithm** in action:
+
 1. When a page is referenced, it is always moved to the top entry in M.
 2. If the page referenced was already in M, all pages above it move down one position.
 3. A transition from within the box to outside of it corresponds to a page being evicted from the memory
@@ -1106,6 +1110,7 @@ Disadvantages:
 No matter whether a CPU does or does not have memory-mapped I/O, it needs to address the device controllers to exchange data with them. The CPU can request data from an I/O controller one byte at a time, but doing so wastes the CPU’s time, so a different scheme, called **DMA (Direct Memory Access)** is often used.
 
 Disk read from Disk to Memory without DMA controller:
+
 1. The disk controller reads data bit by bit from the disk until an entire block is in the controller’s buffer.
 2. It checks checksum to verify any error.
 3. If there is no error, controller causes an interrupt to get a service from operating system.
@@ -1339,7 +1344,7 @@ Total Head movement = |37-53| + |14-37| + |0-14| + |65-0| + |67-65| + |98-67| + 
 
 Move the head from one end of disk to the other. When the head reaches the other end, it immediately return to the beginning of the disk without servicing any request on the return trip.
 
-![alt text](diskscheduling-scan.png "diskscheduling-cscan")
+![alt text](diskscheduling-cscan.png "diskscheduling-cscan")
 
 CSCAN: 65, 67, 98, 122, 124, 183, 199, 0, 14, 37
 
