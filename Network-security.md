@@ -53,3 +53,143 @@ Definitions of a loss for each category:
 * Security Mechanism: A mechanism that is designed to detect, prevent, or recover from a security attack.
 * Security Service: A service that enhances the security of data processing systems and information transfers. A security service makes use of one or more security mechanisms.
 
+### 1.3 Security Attacks
+
+![alt tag](http://www.open.edu/openlearnworks/pluginfile.php/70189/mod_page/content/1/T823_1_002i.jpg)
+
+Attacks:
+
+1. **Passive attack** : attempts to learn or make use of information from the system but does not affect system resource.
+ 
+ * **Release of the message contents**: read the contents of the message
+ * **Traffic analysis**: observe the pattern of the massage
+2. **Active attack**: attempts to alter system resources or affect their operation
+ * **Masquerade**: one entity pretends to be a different entity
+ * **Replay**: involves the passive capture of a data unit and its subsequent retransmission to produce an unauthorized effect
+ * **Modification of message**: some portion of a legitimate message is altered, or that messages are delayed or reordered.
+ * **The denial of service**: prevents or inhibits the normal use or management of communications facilities
+
+![alt tag]()
+
+* **Interruption**: This is an attack on availability
+* **Interception**: This is an attack on confidentiality
+* **Modification**: This is an attack on integrity
+* **Fabrication**: This is an attack on authenticity
+
+### 1.4 Security Services
+
+* **Authentication**: assurance that the communicating entity is the one claimed
+ * **Peer entity authentication**
+ * **Data origin authentication**
+* **Access control**: the ability to limit and control the access to host systems and application via links.
+* **Confidentiality**: the protection of transmitted data from passive attacks
+ * **Trafic flow**: the protection of traffic flow, prevents hacker from knowing message's source and destination.
+* **Integrity**: assures that messages are received as sent with no duplication, insertion, modification, reordering, or replays.
+* **Nonrepudiation**: prevents either sender or receiver from denying a transmitted message.
+* **Availability**
+
+### 1.5 Security Mechanisms
+
+* **Encipherment**
+* **Digitial Signature**
+* **Access control**
+* **Data Integrity**
+* **Authentication Exchange**
+* **Traffice Padding**: the insertion of bits into gaps in data stream to frustrate traffic analysis attemps;
+* **Routing Control**: enable selections of physical secure routes.
+* **Notarization**: the use of trusted third party to assure center properties for data exchange.
+
+### 1.6 Network Security Model
+
+![alt tag](http://image.slidesharecdn.com/dnslec1-130403040340-phpapp01/95/data-network-security-40-638.jpg?cb=1364961883)
+
+Four basic tasks in designing a security service:
+
+1. Design a suitable algorithm for the security transformation
+2. Generate the secret information (keys) used by the algorithm
+3. Develop methods to distribute and share the secret information
+4. Specify a protocol enabling the principals to use the transformation and secret information 
+
+#### Network Access Security
+
+![alt tag](http://image.slidesharecdn.com/cns-13f-lec01-overview-130905003004-/95/network-security-1st-lecture-44-638.jpg?cb=1378341083)
+
+
+1. Select appropriate gatekeeper functions to identify users
+2. Implement security controls to ensure only authorised users access designated information or resources 
+
+## Chapter 2
+
+### Terminologies
+
+* **Plaintext** - original message
+* **Ciphertext** - coded message
+* **Cipher** - algorithm for transforming plaintext to ciphertext
+* **Key** - info used in cipher known only to sender/receiver
+* **Encipher** (encrypt) - converting plaintext to ciphertext
+* **Decipher** (decrypt) - recovering ciphertext from plaintext
+* **Cryptography** - study of encryption principles/methods
+* **Cryptanalysis** (codebreaking) - study of principles/ methods of deciphering ciphertext without knowing key
+* **Cryptology** - field of both cryptography and cryptanalysis
+
+### 2.1 Symmetric Encryption Principles
+
+![alt tag](https://notes.shichao.io/cnspp/figure_2.1.png)
+
+Five ingredients for a symmetric encryption scheme:
+
+1. **Plaintext**: original data.
+2. **Encryption algorithm**
+3. **Secret key**
+4. **Ciphertext**: encrypted output from above three ingredient.
+5. **Decryption algorithm**
+
+Two requirements for secure use of symmetric encryption:
+
+1. A strong encryption algorithm
+2. Sender and receiver muse have obtained copies of secret keys in a secure fashion.
+
+#### Cryptography
+
+Three indepentdent dimemsions of cryptography:
+
+1. The type of operations used for transforming plaintext to ciphertext:
+ * **Substitution**: each element in the plaintext is mapped into another element.
+ * **Transposition**: elements in plaintext is rearraged.
+2. Number of keys used
+ * One-key: symmetric, single-key, secret-key, or conventional encryption.
+ * Multiply keys: asymmetric, two-key, or public-key encryption.
+3. The way in which the plaintext is processed
+ * **Block cipher**: one block at a time.
+ * **Stream cipher**: 
+
+#### Cryptanalysis
+
+1. **Brute-force attack**: Eve has caught a ciphertext and will try every
+ * Possible key to try to decrypt it. This can be made infinitely hard by choosing a large keyspace.
+2. **Cryptanalytic attacks**
+ * **Cyphertext-only attack**: Eve can gather and analyze C’s to learn K2
+  * Encryption algorithm is known
+  * Ciphertext to be decoded is known
+ * **Known-plaintext attack**
+  * Encryption algorithm is known
+  * Ciphertext to be decoded is known
+  * One or more plaintext-ciphertext pairs formed with the secret key are known
+ * **Chosen-plaintext attack**: Mallory can feed chosen messages M into encryption algorithm and look at resulting ciphertexts C. Thus she can attempt to learn either K2 or messages M that produce C.
+  * Encryption algorithm is known
+  * Ciphertext to be decoded is known
+  * Purported message chosen by cryptanalyst, together with its corresponding ciphertext generated with the secret key
+ * **Chosen-ciphertext attack**
+  * Encryption algorithm is known
+  * Ciphertext to be decoded is known
+  * Purported ciphertext chosen by cryptanalyst, together with its corresponding decrypted plaintext generated with the secret key
+ * **Chosen-text attack**:
+  * Encryption algorithm is known
+  * Ciphertext to be decoded is known
+  * Plaintext message chosen by cryptanalyst, together with its corresponding ciphertext generated with the secret key
+  * Purported ciphertext chosen by cryptanalyst, together with its corresponding decrypted plaintext generated with the secret key
+3. **Man-in-the-middle attack**:
+ * Mallory can modify messages
+ * So that they have different meaning – Mallory can drop messages
+ * Mallory can replay messages to Alice, Bob or the third party
+ 
