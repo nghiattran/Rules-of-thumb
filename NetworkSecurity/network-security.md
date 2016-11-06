@@ -60,7 +60,7 @@ Definitions of a loss for each category:
 Attacks:
 
 1. **Passive attack** : attempts to learn or make use of information from the system but does not affect system resource.
- 
+
  * **Release of the message contents**: read the contents of the message
  * **Traffic analysis**: observe the pattern of the massage
 2. **Active attack**: attempts to alter system resources or affect their operation
@@ -108,7 +108,7 @@ Four basic tasks in designing a security service:
 1. Design a suitable algorithm for the security transformation
 2. Generate the secret information (keys) used by the algorithm
 3. Develop methods to distribute and share the secret information
-4. Specify a protocol enabling the principals to use the transformation and secret information 
+4. Specify a protocol enabling the principals to use the transformation and secret information
 
 #### Network Access Security
 
@@ -116,7 +116,7 @@ Four basic tasks in designing a security service:
 
 
 1. Select appropriate gatekeeper functions to identify users
-2. Implement security controls to ensure only authorised users access designated information or resources 
+2. Implement security controls to ensure only authorised users access designated information or resources
 
 ## Chapter 2
 
@@ -161,7 +161,7 @@ Three indepentdent dimemsions of cryptography:
  * Multiply keys: asymmetric, two-key, or public-key encryption.
 3. The way in which the plaintext is processed
  * **Block cipher**: one block at a time.
- * **Stream cipher**: 
+ * **Stream cipher**:
 
 #### Cryptanalysis
 
@@ -240,7 +240,7 @@ Transposition Cipher's properties:
 
 **Rail Fence cipher**: write message letters out diagonally over a number of rows then read off cipher row by row
 
-Example: 
+Example:
 
 ```
 Plaintext: MEETMEAFTERTHETOGAPARTY
@@ -249,7 +249,7 @@ Cipher process:
 m e m a t r h t g p r y
 
  e t e f e t e o a a t
- 
+
 Ciphertext: MEMATRHTGPRYETEFETEOAAT
 ```
 
@@ -261,14 +261,14 @@ Ciphertext: MEMATRHTGPRYETEFETEOAAT
 2. Reorder the columns according to some key before reading off the rows.
 
 ```
-Key: 
+Key:
             6 3 2 4 1 5
-Plaintext: 
+Plaintext:
             W E A R E D
-            I S C O V E 
-            R E D F L E 
-            E A T O N C 
-            E Q K J E U 
+            I S C O V E
+            R E D F L E
+            E A T O N C
+            E Q K J E U
 Ciphertext: EVLNE ACDTK ESEAQ ROFOJ DEECU WIREE
 ```
 
@@ -319,7 +319,7 @@ Single round of DES
 Single round structure of DES:
 
 * Uses two 32-bit L & R halves
-* As for any Feistel cipher can describe as: 
+* As for any Feistel cipher can describe as:
  L<sub>i</sub> = R<sub>i–1</sub>
  R<sub>i</sub> = L<sub>i–1</sub> ⊕ F(R<sub>i–1</sub>, K<sub>i</sub>)
 * F takes 32-bit R half and 48-bit subkey:
@@ -388,10 +388,10 @@ C = E<sub>k3</sub>(D<sub>k2</sub>(E<sub>k1</sub>(P)))
 
 * 128-bit key
 * Used in PGP
- 
+
 **Blowfish**
 
-* High execution speed 
+* High execution speed
 * Run in less than 5K of memory
 
 **RC5**
@@ -420,7 +420,7 @@ Stream cipher properties:
 **RC4** outline:
 
 1. Initial State of **S**(state vector, initialized from key) and **T** (temporary vector)
- 
+
  * **S**: a permutation of 8-bit numbers from 0 to 255.
 ```
 /* Initialization of S and T */
@@ -448,7 +448,7 @@ for i = 0 to 255 do
  swap(S[i], S[j])
  t = (S[i] + S[j]) mod 256
  k = S[t]
- 
+
  Ci = Pi XOR k     // cipher
  Di = Ci XOR k     // or decipher
 ```
@@ -456,7 +456,7 @@ for i = 0 to 255 do
 To encrypt, XOR the value k with the next byte of plaintext. To decrypt, XOR it with the next byte of the ciphertext.
 
 Key is only used in first step
- 
+
 ### 2.5 Cipher Block Modes of Operation
 
 #### 1. Electronic Codebook (ECB)
@@ -471,7 +471,7 @@ If the same b-bit block appear repeatively, it always produce same ciphertext.
 
 Uses: secure transmission of single values
 
-#### 2. Cipher Block Chaining (CBC) 
+#### 2. Cipher Block Chaining (CBC)
 
 ![alt tag](http://flylib.com/books/3/190/1/html/2/images/06fig04.jpg)
 
@@ -479,7 +479,7 @@ Same key is used for all blocks.
 
 The input to the encryption is the XOR of the current plaintext abd the preceding ciphertext. Therefore, repeating patterns of b-bit are not exposed.
 
-**Initial vector (IV)** must be known by sender and receiver and should be protected as well as key. 
+**Initial vector (IV)** must be known by sender and receiver and should be protected as well as key.
 
 #### 3. Cipher FeedBack (CFB)
 
@@ -496,7 +496,7 @@ Using **Cipher FeedBack**, a block cipher can be transmitted to stream cipher.
 Two major placement alternatives:
 
 1. Link encryption
- * Encryption occurs independently on every link 
+ * Encryption occurs independently on every link
  * Implies must decrypt traffic between links
  * Requires many devices and keys
 2. End-to-end encryption
@@ -506,3 +506,216 @@ Two major placement alternatives:
  * Hence although contents protected, traffic pattern flows are not
 
 Therefore, link encryption occurs at layers 1 or 2, end-to-end can occur at layers 3, 4, 6, 7
+
+## Chapter 3: Public-key cryptography and message authentication
+
+### 1. Theories
+
+**Prime factorization** of a number `n` is when its written as a product of primes.
+
+Two numbers are **relatively prime** if they have no common divisors apart from 1.
+
+#### 1.1 Fermat's theorem
+
+a<sup>p-1</sup> = 1 (mod p)
+
+where `p` is prime and `gcd(a,p)=1`
+
+Also
+
+a<sup>p</sup> = a (mod p)
+
+#### 1.2 Euler totient function
+
+A number `n` has **complete set of residues** is :0..n-1.
+
+**Reduced set of residues**: residues which are relatively prime to n
+
+Number of elements in reduced set of residues is called the **Euler Totient Function ø(n)**
+
+ø(n) is calculated as:
+* For p (p prime): ø(p) = p -1
+* For P*q (p,q prime): ø(p*q) = (p-1) * (q-1)
+
+#### 1.3 Euler's Theorem
+
+a<sup>ø(n)</sup> = 1 (mod 1)
+
+for any `a, n` where `gcd(a, n) = 1`.
+
+Example:
+
+a = 3; n =10; ø(10) = ø(2*5) = (2-10) * (5-1) = 4
+
+Hence 3<sup>4</sup> = 81 = 1 mod 10
+
+#### 1.4 Primality Testing
+
+
+### 2. Public-Key Cryptography
+
+**Public-Key Cryptography** is developed to address two key issues:
+* Key distribution – how to have secure communications in general without having to trust a KDC with your key
+* Digital signatures – how to verify a message comes intact from the claimed sender
+
+#### Application for public-key cryptography
+
+**Public-Key Cryptography** can be used in 3 categories:
+* Encryption/decryption
+* Digital signatures (provide authentication)
+* Key exchange (of session keys)
+
+#### Requirements for public-key cryptography
+
+Requirements:
+1. Computationally easy for a party B to generate a pair (public key KUb, private key KR<sub>b</sub>)
+2. Easy for sender to generate ciphertext: C = E<sub>KUb</sub>(M)
+3.  Easy for the receiver to decrypt ciphertext using private key: M = D<sub>KRb</sub>(C) = DD<sub>KRb</sub>[ED<sub>KRb</sub>(M)]
+4. Computationally infeasible to determine private key (KR<sub>b</sub>) knowing public key (KU<sub>b</sub>)
+5. Computationally infeasible to recover message M, knowing KU<sub>b</sub> and ciphertext C
+6. Either of the two keys can be used for encryption, with the other used for decryption:
+M D [E (M )] D [E (M )]
+
+#### 2.1 Public-key cryptography algorithms
+
+##### 2.1.1 RSA
+
+Key generation process:
+1. Select p,q:       p and q both prime
+2. Calculate:        n = p x q
+3. Calculate:        Φ (n) = ( p − )(1 q − )1
+4. Select integer e: gcd( Φ(n), e ) = 1; 1 < e < Φ(n)
+5. Calculate d:      d = e<sup>-1</sup> mod Φ(n)
+6. Public Key:       KU = {e,n}
+7. Private key:      KR = {d,n}
+
+Encryption:
+1. Obtains public key of recipient PU={e,n}
+2. Computes: C = M<sup>e</sup> mod n, where 0≤M<n
+
+Decryption:
+1. Uses their private key PR={d,n}
+2. Computes: M = C<sup>d</sup> mod n
+
+##### Example:
+
+Key generation:
+1. Select primes: `p` = 17 & `q` = 11
+2. Compute `n` = `pq` = 17 x 11 = 187
+3. Compute ø(`n`)=(`p`–1)(`q`-1)= 16 x 10 = 160
+4. Select `e`: `gcd(e,160)` = 1; choose e = 7
+5. Determine `d`: `de` = 1 mod 160 and `d` < 160 . Hence, `d` = 23 since 23 x 7 = 161 = 10 x 160 + 1
+6. Publish public key `PU`={7,187}
+7. Keep secret private key `PR`={23,187}
+
+Given message M = 88 (88 < 187)
+
+Encryption:
+1. Obtains public key: `PU` = {7,187}
+2. Computes: `C` = M<sup>e</sup> mod n = 88<sup>7</sup> mod 187 = 11
+
+Decryption:
+1. Uses their private key `PR` = {23,187}
+2. Computes: `M` = C<sup>d</sup> mod n = 11<sup>23</sup> mod 187 = 88
+
+##### RSA Security
+
+Possible approaches to defeat RSA:
+* Brute force key search.
+* Refactoring `n` into two primes.
+
+#### 2.1.2 Diffie-Hellman Key Exchange
+
+A public-key distribution scheme:
+* cannot be used to exchange an arbitrary message
+* rather it can establish a common key
+* known only to the two participants
+
+##### Diffie-Hellman Setup
+
+Diffie-Hellman Setup:
+* All users agree on global parameters:
+  * A large prime number q
+  * An integer a that is a primitive root of q
+* Each user (eg. A) generates their key
+  * Chooses a private key (number): x<sub>A</sub> < q
+  * Compute their public key: y<sub>A</sub> = a<sup>x<sub>A</sub></sup> mod q
+* Each user makes public that key y<sub>A</sub>
+
+##### Diffie-Hellman Key Exchange
+
+Shared session key for users A & B is KAB:
+K<sub>AB</sub> = a<sup>x<sub>A</sub>.x<sub>B</sub></sup> mod q
+= y<sub>A</sub><sup>x<sub>B</sub></sup> mod q (which B can compute)
+= y<sub>B</sub><sup>x<sub>A</sub></sup> mod q (which A can compute)
+
+K<sub>AB</sub> is used as session key in symmetric-key encryption scheme btw Alice and Bob
+
+##### Example
+
+* Users Alice & Bob who wish to swap keys:
+* Agree on prime q=353 and a=3
+* Select random secret keys:
+  * A chooses x<sub>A</sub>=97, B chooses x<sub>B</sub>=233
+* compute respective public keys:
+  * y<sub>A</sub>=397 mod 353 = 40 (Alice)
+  * y<sub>B</sub>=3233 mod 353 = 248 (Bob)
+* compute shared session key as:
+  * K<sub>AB</sub> = y<sub>A</sub><sup>x<sub>B</sub></sup> mod 353 = 24897 = 160 (Alice)
+  * K<sub>AB</sub> = y<sub>B</sub><sup>x<sub>A</sub></sup> mod 353 = 40233 = 160 (Bob)
+
+### 3. Digital signatures
+
+### 4. Authentication
+
+Requirements - must be able to verify that:
+1. Message came from apparent source or author
+2. Contents have not been altered
+3. Sometimes, it was sent at a certain time or sequence.
+
+**Approaches to Message Authentication**:
+* Authentication Using Conventional Encryption
+  * Only the sender and receiver should share a key
+* Message Authentication without Message Encryption
+  * An authentication tag is generated and appended to each message
+* Message Authentication Code
+  * Calculate the MAC as a function of the message and the key. MAC = F(K, M)
+
+**Message Authentication Code (MAC)**:
+* Generated by an algorithm that creates a small fixed-sized block
+* Is appended to message as a signature
+* Receiver performs same computation on message and checks it matches the MAC
+* Provides assurance that message is unaltered and comes from sender
+
+**MAC Properties**:
+* MAC is a cryptographic checksum: MAC = C<sub>K</sub>(M)
+  * A variable-length message M.
+  * A secret key K
+* Many-to-one function
+
+#### 5 Secure Hash function
+
+Six properties of a HASH function:
+1. Can be applied to any sized message M
+2. Produces fixed-length output h
+3. Easy to compute `h=H(M)` for any message M
+4. Given `h` is infeasible to find `x` s.t. `H(x)=h`
+5. Given `x` is infeasible to find `y` s.t. `H(y)=H(x)`
+  * Weak collision resistance
+6. Infeasible to find any `x`,`y` s.t. `H(y)=H(x)`
+  * Strong collision resistance
+
+##### Secure Hash Algorithm (SHA)
+
+![alt tag](sha-chart.png)
+
+![alt tag](http://flylib.com/books/3/190/1/html/2/images/12fig01.jpg)
+
+![alt tag](http://flylib.com/books/3/190/1/html/2/images/12fig02.jpg)
+
+**SHA-512** processing steps:
+1. **Append padding bits**: the message is padded so that its length is congruent to 896 modulo 1024. Padding is always added, even if the message is already of the desired length.
+2. **Append length**: a block of 128 bits is a appended. This block contains the length of the original message.
+3. **Initialize hash buffer**: A 512 buffer is used to hold intermediate and final results of hash function. The buffer can be represented as 8 64-bit register (a, b, c, d, e, f, g, h)
+4. **Process the message**: 80 processing rounds. Each takes input as 512-bit buffer
+5. **Output**:
