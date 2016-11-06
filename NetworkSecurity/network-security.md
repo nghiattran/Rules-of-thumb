@@ -234,7 +234,7 @@ If only one of these rules is disregarded, the cipher is no longer unbreakable:
 Transposition Cipher's properties:
 
 * Rearranging letters order without altering the actual letters used in plaintext.
-• Can be recognized since it has the same frequency distribution as the original text.
+* Can be recognized since it has the same frequency distribution as the original text.
 
 ##### Rail Fence cipher
 
@@ -727,3 +727,164 @@ Six properties of a HASH function:
 3. **Initialize hash buffer**: A 512 buffer is used to hold intermediate and final results of hash function. The buffer can be represented as 8 64-bit register (a, b, c, d, e, f, g, h)
 4. **Process the message**: 80 processing rounds. Each takes input as 512-bit buffer
 5. **Output**:
+
+## Chapter 4: Authentication Applications
+
+### 4.1  Authentication Dialogue
+
+#### 4.1.1 A Simple Authentication Dialogue:
+
+1. C => AS: ID<sub>c</sub> || P<sub>c</sub> || ID<sub>v</sub>
+2. AS => C: Ticket
+3. C => V: ID<sub>c</sub> || Ticket
+
+Ticket = EK<sub>v</sub> [ID<sub>c</sub> || AD<sub>c</sub> || ID<sub>v</sub>]
+
+Where:
+* C = Client
+* AS = authentication server
+* V = server
+* ID<sub>c</sub> = identifier of user on C
+* ID<sub>v</sub> = identifier of V
+* P<sub>c</sub> = password of user on C
+* AD<sub>c</sub> = network address of C
+* K<sub>v</sub> = secret encryption key shared by AS an V
+
+When a client wants to access to server, he/she is authenticated as following steps:
+
+1. Client send request to authentication server using his/her ID, password, and the server he/she wants to access to.
+2. Authentication server responds to client with a Ticket which in a encrypted information about:
+  * User's ID
+  * Network address
+  * Server's ID
+3. Then, client communicate with desired server using the Ticket. Server also needs to check if the ticket is qualified to access by decrypting it using a shared secret key with authentication server.
+
+Problems:
+* Ticket nonusable
+  * different servers for different services
+* Plaintext transmission of password
+
+Solution:
+* Ticket-Granting Server (TGS)
+* No plaintext transmission of password
+
+#### 4.1.2 A More Secure Authetication Dialogue
+
+Once per user logon session:
+
+1. C => AS: ID<sub>c</sub> || ID<sub>tgs</sub>
+2. AS => C: EK<sub>c</sub> [Ticket<sub>tgs</sub>]
+
+Once per type of service:
+
+3. C => TGS: ID<sub>c</sub> || ID<sub>v</sub> ||Ticket<sub>tgs</sub>
+4. TGS => C: Ticket<sub>v</sub>
+
+Once per service session:
+
+5. C => V: ID<sub>c</sub> || Ticket<sub>v</sub>
+
+Where:
+* Tickettgs=EKtgs [IDc || ADc || IDtgs || TS1 || lifetime1]TS = timestamp
+* Ticketv=EKv [IDc || ADc || IDv || TS2 || lifetime2]
+* Kc = a key derived from user password and already stored in at AS
+* Ktgs = a key shared only by AS and TGS
+
+### 4.2 Kerberos
+
+**Kerberos** components:
+* An Authentication Server (AS)
+  * Users initially negotiate with AS to identify self
+  * AS provides a non-corruptible authentication credential (ticket granting ticket TGT)
+* A Ticket Granting server (TGS)
+  * Users subsequently request access to other services from TGS on basis of users TGT
+
+#### 4.2.1 Kerberos v4
+
+Authentication dialogue:
+
+1. Obtain ticket granting ticket from AS
+  * Once per session
+2. Obtain service granting ticket from TGT
+  For each distinct service required
+3. Client/server exchange to obtain service
+  On every service request
+
+A **Kerberos realm** is a set of managed nodes that share the same Kerberos database.
+
+#### 4.2.2 Kerberos v5
+
+Difference between version 4 and 5:
+* Encryption system dependence (V.4 DES)
+* Internet protocol dependence
+* Message byte ordering
+* Ticket lifetime
+* Authentication forwarding
+* Interrealm authentication
+
+### 4.3 Key distribution using asymmetric encryption
+
+Public-key certificate:
+* Consists of a public key plus a user ID of the key owner, with the whole block signed by a trusted third party
+* Typically, the third party is a certificate authority (CA) that is trusted by the user community, such as a government agency or a financial institution
+* A user can present his or her public key to the authority in a secure manner and obtain a certificate
+* The user can then publish the certificate
+* Anyone needing this user’s public key can obtain the certificate and verify that it is valid by way of the attached trusted signature
+
+### 4.4 X.509
+
+Obtaining a Certificate:
+* Any user with access to CA can get any certificate from it
+* Only the CA can modify a certificate
+* Because cannot be forged, certificates can be placed in a public directory
+
+**CA Hierarchy**:
+* If both users share a common CA then they are assumed to know its public key
+* Otherwise CA's must form a hierarchy
+* Use certificates linking members of hierarchy to validate other CA's
+  * Each CA has certificates for clients (forward) and parent (backward)
+* Each client trusts parents certificates
+* Enable verification of any certificate from one CA by users of all other CAs in hierarchy
+
+**Certificate Revocation**:
+* Certificates have a period of validity
+* May need to revoke before expiry, eg:
+  1. user's private key is compromised
+  2. user is no longer certified by this CA
+  3. CA's certificate is compromised
+* CA’s maintain list of revoked certificates
+  * The Certificate Revocation List (CRL)
+* Users should check certificates with CA’s CRL
+
+
+X.509 includes three alternative authentication procedures:
+
+1. One-Way Authentication
+2. Two-Way Authentication
+3. Three-Way Authentication
+4.
+![](http://flylib.com/books/3/190/1/html/2/images/14fig06.jpg)
+
+#### 4.4.1 One-Way Authentication
+
+One message ( A->B) used to establish
+* The identity of A and that message is from A
+* Message was intended for B
+* Integrity & originality of message
+
+Message must include timestamp, nonce, B's identity and is signed by A.
+
+#### 4.4.2 Two-Way Authentication
+
+Two messages (A->B, B->A) which also establishes in addition:
+* The identity of B and that reply is from B
+* That reply is intended for A
+* Integrity & originality of reply
+
+Reply includes original nonce from A, also timestamp and nonce from B.
+
+#### 4.4.3 Three-Way Authentication
+
+Using three messages (A->B, B->A, A->B) which enables above authentication without synchronized clocks.
+
+Reply from A back to B containing signed copy of nonce from B.
