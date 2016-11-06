@@ -509,13 +509,13 @@ Therefore, link encryption occurs at layers 1 or 2, end-to-end can occur at laye
 
 ## Chapter 3: Public-key cryptography and message authentication
 
-### 1. Theories
+### 3.1. Theories
 
 **Prime factorization** of a number `n` is when its written as a product of primes.
 
 Two numbers are **relatively prime** if they have no common divisors apart from 1.
 
-#### 1.1 Fermat's theorem
+#### 3.1.1 Fermat's theorem
 
 a<sup>p-1</sup> = 1 (mod p)
 
@@ -525,7 +525,7 @@ Also
 
 a<sup>p</sup> = a (mod p)
 
-#### 1.2 Euler totient function
+#### 3.1.2 Euler totient function
 
 A number `n` has **complete set of residues** is :0..n-1.
 
@@ -537,7 +537,7 @@ Number of elements in reduced set of residues is called the **Euler Totient Func
 * For p (p prime): ø(p) = p -1
 * For P*q (p,q prime): ø(p*q) = (p-1) * (q-1)
 
-#### 1.3 Euler's Theorem
+#### 3.1.3 Euler's Theorem
 
 a<sup>ø(n)</sup> = 1 (mod 1)
 
@@ -549,38 +549,39 @@ a = 3; n =10; ø(10) = ø(2*5) = (2-10) * (5-1) = 4
 
 Hence 3<sup>4</sup> = 81 = 1 mod 10
 
-#### 1.4 Primality Testing
+#### 3.1.4 Primality Testing
 
 
-### 2. Public-Key Cryptography
+### 3.2. Public-Key Cryptography
 
 **Public-Key Cryptography** is developed to address two key issues:
 * Key distribution – how to have secure communications in general without having to trust a KDC with your key
 * Digital signatures – how to verify a message comes intact from the claimed sender
 
-#### Application for public-key cryptography
+#### 3.2.1 Application for public-key cryptography
 
 **Public-Key Cryptography** can be used in 3 categories:
 * Encryption/decryption
 * Digital signatures (provide authentication)
 * Key exchange (of session keys)
 
-#### Requirements for public-key cryptography
+#### 3.2.2 Requirements for public-key cryptography
 
 Requirements:
+
 1. Computationally easy for a party B to generate a pair (public key KUb, private key KR<sub>b</sub>)
 2. Easy for sender to generate ciphertext: C = E<sub>KUb</sub>(M)
 3.  Easy for the receiver to decrypt ciphertext using private key: M = D<sub>KRb</sub>(C) = DD<sub>KRb</sub>[ED<sub>KRb</sub>(M)]
 4. Computationally infeasible to determine private key (KR<sub>b</sub>) knowing public key (KU<sub>b</sub>)
 5. Computationally infeasible to recover message M, knowing KU<sub>b</sub> and ciphertext C
-6. Either of the two keys can be used for encryption, with the other used for decryption:
-M D [E (M )] D [E (M )]
+6. Either of the two keys can be used for encryption, with the other used for decryption: M D [E (M )] D [E (M )]
 
-#### 2.1 Public-key cryptography algorithms
+#### 3.2.3 Public-key cryptography algorithms
 
-##### 2.1.1 RSA
+##### RSA
 
 Key generation process:
+
 1. Select p,q:       p and q both prime
 2. Calculate:        n = p x q
 3. Calculate:        Φ (n) = ( p − )(1 q − )1
@@ -590,16 +591,19 @@ Key generation process:
 7. Private key:      KR = {d,n}
 
 Encryption:
+
 1. Obtains public key of recipient PU={e,n}
 2. Computes: C = M<sup>e</sup> mod n, where 0≤M<n
 
 Decryption:
+
 1. Uses their private key PR={d,n}
 2. Computes: M = C<sup>d</sup> mod n
 
 ##### Example:
 
 Key generation:
+
 1. Select primes: `p` = 17 & `q` = 11
 2. Compute `n` = `pq` = 17 x 11 = 187
 3. Compute ø(`n`)=(`p`–1)(`q`-1)= 16 x 10 = 160
@@ -611,6 +615,7 @@ Key generation:
 Given message M = 88 (88 < 187)
 
 Encryption:
+
 1. Obtains public key: `PU` = {7,187}
 2. Computes: `C` = M<sup>e</sup> mod n = 88<sup>7</sup> mod 187 = 11
 
@@ -624,7 +629,7 @@ Possible approaches to defeat RSA:
 * Brute force key search.
 * Refactoring `n` into two primes.
 
-#### 2.1.2 Diffie-Hellman Key Exchange
+##### Diffie-Hellman Key Exchange
 
 A public-key distribution scheme:
 * cannot be used to exchange an arbitrary message
@@ -664,11 +669,12 @@ K<sub>AB</sub> is used as session key in symmetric-key encryption scheme btw Ali
   * K<sub>AB</sub> = y<sub>A</sub><sup>x<sub>B</sub></sup> mod 353 = 24897 = 160 (Alice)
   * K<sub>AB</sub> = y<sub>B</sub><sup>x<sub>A</sub></sup> mod 353 = 40233 = 160 (Bob)
 
-### 3. Digital signatures
+### 3.3. Digital signatures
 
-### 4. Authentication
+### 3.4. Authentication
 
 Requirements - must be able to verify that:
+
 1. Message came from apparent source or author
 2. Contents have not been altered
 3. Sometimes, it was sent at a certain time or sequence.
@@ -693,9 +699,10 @@ Requirements - must be able to verify that:
   * A secret key K
 * Many-to-one function
 
-#### 5 Secure Hash function
+### 3.5 Secure Hash function
 
 Six properties of a HASH function:
+
 1. Can be applied to any sized message M
 2. Produces fixed-length output h
 3. Easy to compute `h=H(M)` for any message M
@@ -705,7 +712,7 @@ Six properties of a HASH function:
 6. Infeasible to find any `x`,`y` s.t. `H(y)=H(x)`
   * Strong collision resistance
 
-##### Secure Hash Algorithm (SHA)
+#### 3.5.1 Secure Hash Algorithm (SHA)
 
 ![alt tag](sha-chart.png)
 
@@ -714,6 +721,7 @@ Six properties of a HASH function:
 ![alt tag](http://flylib.com/books/3/190/1/html/2/images/12fig02.jpg)
 
 **SHA-512** processing steps:
+
 1. **Append padding bits**: the message is padded so that its length is congruent to 896 modulo 1024. Padding is always added, even if the message is already of the desired length.
 2. **Append length**: a block of 128 bits is a appended. This block contains the length of the original message.
 3. **Initialize hash buffer**: A 512 buffer is used to hold intermediate and final results of hash function. The buffer can be represented as 8 64-bit register (a, b, c, d, e, f, g, h)
