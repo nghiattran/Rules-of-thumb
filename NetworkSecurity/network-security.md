@@ -1144,3 +1144,113 @@ ESP authentication field is similar to AH authentication field
 ## Chapter 10: Malicious Software
 
 ![Malicious software](http://image.slidesharecdn.com/21302-chapter-13-malicious-code507/95/21302-chapter-13-malicious-code-5-728.jpg?cb=1271315978)
+ 
+Malicious software types:
+* **Backdoor or Trapdoor**
+  * Secret entry point into a program
+  * Allows those who know access bypassing usual security procedures
+  * Have been commonly used by developers
+  * A threat when left in production programs allowing exploited by attackers
+  * Very hard to block in O/S
+  * Requires good s/w development & update
+* **Logic Bomb**:
+  * One of oldest types of malicious software
+  * Code embedded in legitimate program
+  * Activated when specified conditions met
+    * Presence/absence of some file
+    * Particular date/time
+    * Particular user
+  * When triggered typically damage system – modify/delete files/disks, halt machine, etc
+* **Trojan Horse**
+  * Program with hidden side-effects 
+  * Usually superficially attractive
+    * eg game, s/w upgrade etc
+  * When run performs some additional tasks
+    * Allows attacker to indirectly gain access they do not have directly
+  * Often used to propagate a virus/worm or install a backdoor or simply to destroy data
+
+### 10.1 Viruses
+
+* **Viruses**:
+  * Piece of software that infects programs
+    * Modifying them to include a copy of the virus
+    * So it executes secretly when host program is run
+  * Specific to operating system and hardware
+    * Taking advantage of their details and weaknesses
+  * A typical virus goes through phases of:
+    * Dormant: virus is idly waiting to be actiated.
+    * Propagation: the virus place a copy of itself into other programs or into certain system areas on the disk
+    * Triggering: virus is activated to perform the function it is created for
+    * Execution: perform
+
+A simple way to detect infected files is cross checking file length between infected file and similar clean file. Since virus is appended to infected file, file length should be different.
+
+A way to overcome this situation is using compression to keep length file of the infected one idential to a clean file.
+
+#### 10.1.1 Virus Classification
+
+Virus classifications
+* By target:
+  * Boot sector: infects the master and spreads when the system is booted
+  * File infector: infects executable files
+  * Macro virus: infects macro or scripting file
+* By conceal:
+  * Encrypted virus: create a random key for everything replica so that there is no repetition in infected files => more difficult to detect
+  * Stealth virus: hides itself from anti-virus
+  * Polymorphic virus: 
+  * Metamorphic virus
+
+#### 10.1.2 Virus Countermeasures
+
+**Generic Decryption** runs executable files through GD scanner. It lets virus decrypt itself in interpreter and then periodically scan for virus signatures.
+
+**Behavior-Blocking Software**:
+![BBS](bbs.png)
+
+### 10.2 Worm
+
+**Worm** is like except that it can replicate itself without human interaction. 
+
+#### 10.2.1 Morris Worm
+
+Various attacks on UNIX systems:
+* Cracking password file to use login/password to logon to other systems
+* Exploiting a bug in the finger protocol
+* Exploiting a bug in sendmail
+
+#### 10.2.2 Worm Countermeasures
+
+Worm defense approaches include:
+* Signature-based worm scan filtering
+* Filter-based worm containment
+* Payload-classification-based worm containment
+* Threshold random walk scan detection
+* Rate limiting and rate halting
+
+### 10.3 Distributed Denial of Service Attacks (DDoS)
+
+#### 10.3.1 DDoS types:
+![DDoS types](ddos-types.png)
+
+#### 10.3.2 DDoS constructin
+
+Essential ingredients:
+1. A software can carry out the attack
+2. A vulnerability in a large number of systems
+3. A scanning strategy for vulnerability
+
+Scanning strategies:
+* Random
+* Hit list
+* Topological
+* Local subnet
+
+TODO: come back
+
+#### 10.3.2 DDoS Countermeasures
+
+Three broad lines of defense:
+1. attack prevention & preemption (before)
+2. attack detection & filtering (during)
+3. attack source traceback & ident (after)
+
