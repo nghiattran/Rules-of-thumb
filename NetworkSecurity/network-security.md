@@ -918,7 +918,6 @@ Reply from A back to B containing signed copy of nonce from B.
 
 <table>
   <th>
-    <td></td>
     <td>single hop</td>
     <td>multiple hops</td>
   </th>
@@ -927,7 +926,7 @@ Reply from A back to B containing signed copy of nonce from B.
     <td>infrastructure</td>
     <td>
       host connects to base station (WiFi, WiMAX, cellular) which connects to larger Internet
-      </td>
+    </td>
     <td>
       host may have to relay through several wireless nodes to connect to larger Internet: mesh net
     </td>
@@ -1235,6 +1234,7 @@ Worm defense approaches include:
 #### 10.3.2 DDoS constructin
 
 Essential ingredients:
+
 1. A software can carry out the attack
 2. A vulnerability in a large number of systems
 3. A scanning strategy for vulnerability
@@ -1250,6 +1250,7 @@ TODO: come back
 #### 10.3.2 DDoS Countermeasures
 
 Three broad lines of defense:
+
 1. attack prevention & preemption (before)
 2. attack detection & filtering (during)
 3. attack source traceback & ident (after)
