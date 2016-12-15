@@ -888,3 +888,255 @@ Reply includes original nonce from A, also timestamp and nonce from B.
 Using three messages (A->B, B->A, A->B) which enables above authentication without synchronized clocks.
 
 Reply from A back to B containing signed copy of nonce from B.
+
+## Chapter 6: Wireless and Mobile Networks
+
+### 6.1 Elements of a wireless network
+
+**Wireless hosts**:
+* Laptop, smartphone
+* Maybe stationary or mobile (wireless does not always mean mobile).
+
+**Base station**:
+* Typically connected to wired network
+* Relay - responsible for sending packets between wired network and wireless host(s)
+
+**Wireless link**:
+* Typically used to connect mobile(s) to base station
+* Also used as backbone link
+* Mutiple access protocol coordinates link access
+* Various data rates, transmission distance
+
+**Infrastructure mode**:
+* Base station connects mobiles into wired network
+* Handoff: mobile changes base station providing connection into wired network
+
+**Ad hoc mode**:
+* No base stations
+* Nodes can only transmit to other nodes within link coverage
+* Nodes organize themselves into a network: route among themselves 
+
+<table>
+  <th>
+    <td></td>
+    <td>single hop</td>
+    <td>multiple hops</td>
+  </th>
+
+  <tr>
+    <td>infrastructure</td>
+    <td>
+      host connects to base station (WiFi, WiMAX, cellular) which connects to larger Internet
+      </td>
+    <td>
+      host may have to relay through several wireless nodes to connect to larger Internet: mesh net
+    </td>
+  </tr>
+
+  <tr>
+    <td>no infrastructure</td>
+    <td>
+      no base station, no connection to larger Internet (Bluetooth, ad hoc nets)
+    </td>
+    <td>
+      no base station, no connection to larger Internet. May have to relay to reach other a given wireless node MANET, VANET
+    </td>
+  </tr>
+</table>
+
+### 6.2 Wireless Link Characteristics 
+
+Important differences from wired link:
+1. **Decreased signal strength**: radio signal attenuates as it propagates through matter
+2. **Interference from other sources**: standardized wireless network frequencies (e.g., 2.4 GHz) shared by other devices (e.g., phone); devices (motors) interfere as well
+3. **Multipath propagation**: radio signal reflects off objects ground, arriving at destination at slightly different times
+
+**SNR**: signal-to-noise ratio. Larger SNR means easier to extract signal from noise
+
+**BER** (bit error rate)
+
+SNR versus BER tradeoffs:
+* Given physical layer: increase power -> increase SNR->decrease BER (bit error rate)
+* Given SNR: choose physical layer that meets BER requirement, giving highest throughput
+  * SNR may change with mobility: dynamically adapt physical layer (modulation technique, rate)
+
+Multiple wireless senders and receivers create additional problems:
+* Hidden terminal problem
+  * B, A hear each other
+  * B, C hear each other
+  * A, C can not hear each other means A, C unaware of their interference at B
+* Signal attenuation
+  * B, A hear each other
+  * B, C hear each other
+  * A, C can not hear each other interfering at B
+
+#### 6.2.1 Code Division Multiple Access (CDMA)
+
+**CDMA**: unique “code” assigned to each user; i.e., code set partitioning:
+* All users share same frequency, but each user has own “chipping” sequence (i.e., code) to encode data
+* Allows multiple users to “coexist” and transmit simultaneously with minimal interference (if codes are “orthogonal”)
+
+Encoded signal = (original data) X (chipping sequence)
+Eecoding: inner-product of encoded signal and chipping sequence
+
+### 6.3 IEEE 802.11 wireless LANs (“Wi-Fi”)
+
+**IEEE 802.11 wireless LAN**, also known as **WiFi**.
+
+#### 6.3.1 The 802.11 Architecture
+
+Basic Service Set (BSS) (aka “cell”) in infrastructure mode contains:
+* Wireless hosts
+* Access point (AP): base station
+* Ad hoc mode: hosts only
+
+##### Channels, association
+
+802.11b: 2.4GHz-2.485GHz spectrum divided into 11 channels at different frequencies
+* AP admin chooses frequency for AP
+* Interference possible: channel can be same as that chosen by neighboring AP!
+
+Host: must **associate** with an AP
+* Scans channels, listening for beacon frames containing AP’s name (SSID) and MAC address
+* Selects AP to associate with
+* May perform authentication
+* Will typically run DHCP to get IP address in AP’s subnet
+
+![](http://images.slideplayer.com/30/9559091/slides/slide_29.jpg)
+
+#### 6.3.2 The 802.11 MAC Protocol
+
+**CSMA with collision avoidance** (**CSMA/CA**) for collision avoidance:
+1. CSMA - sense before transmitting
+2. Refrains from transmitting if the channel is sensed busy
+
+**Short Inter-frame Spacing** (**SIFS**): waiting period after the destination station receives a frame that passes the CRC and before it sends back an acknowledgment frame.
+
+**Distributed Inter-frame Space** (**DIFS**): waiting time before a host transmit its frame after sensing the channel idle.
+
+802.11 sender:
+1. If sense channel idle for **DIFS** then transmit entire frame (no CD)
+2. If sense channel busy then start random backoff time timer counts down while channel idle transmit when timer expires if no ACK, increase random backoff interval, repeat 2.
+3. If an acknowledgment is received, the transmitting station knows that its frame has been correctly received at the destination station.
+
+802.11 receiver:
+* If frame received OK return ACK after **SIFS** (ACK needed due to hidden terminal problem) 
+
+## Chapter 8: Network Security
+
+### 8.1 What is network security
+
+**Confidentiality**: only sender, intended receiver should “understand” message contents:
+
+**Authentication**: sender, receiver want to confirm identity of each other
+
+**Message integrity**: sender, receiver want to ensure message not altered (in transit, or afterwards) without detection
+
+**Access and availability**: services must be accessible and available to users
+
+Intruder can potentially perform:
+* **Eavesdropping**: sniffing and recording control and data messages on the channel.
+* **Modification, insertion, or deletion** of messages or message content.
+* **Impersonation**: can fake (spoof) source address in packet (or any field in packet)
+* **Hijacking**: “take over” ongoing connection by removing sender or receiver, inserting himself in place.
+* **Denial of service**: prevent service from being used by others (e.g., by overloading resources)
+
+### 8.5 Securing e-mail
+
+#### Secure e-mail Using Public Key Encryption
+
+Sender:
+* Generates random symmetric private key, K<sub>S</sub>.
+* Encrypts message with KS (for efficiency)
+* Also encrypts KS with Bob’s public key.
+* Sends both K<sub>S</sub>(m) and K<sub>P</sub>(K<sub>S</sub>) to Bob.
+
+Receiver:
+* Uses his private key to decrypt and recover K<sub>S</sub>.
+* Uses K<sub>S</sub> to decrypt K<sub>S</sub>(m) to recover m.
+
+#### Secure e-mail Using Digital Signature
+
+Sender:
+* Sender digitally signs message.
+* Sends both message (in the clear) and digital signature.
+
+#### Secured e-mail with secrecy, sender authentication, message integrity
+
+Sender uses three keys: her private key, Bob’s public key, newly created symmetric key, hash function.
+
+Sender:
+* Sender digitally signs message.
+* Generates random symmetric private key, K<sub>S</sub>.
+* Encrypts message with KS (for efficiency)
+* Also encrypts K<sub>S</sub> with Bob’s public key.
+* Sends both K<sub>S</sub>(m) and K<sub>P</sub>(K<sub>S</sub>) and digital signature to Bob.
+
+#### Pretty good privacy (PGP)
+
+Uses symmetric key cryptography, public key cryptography, hash function, and digital signature as described
+
+### 8.6 Securing TCP connections: SSL
+
+Provides transport layer security to any TCP-based application using SSL services. 
+
+SSL consists of three phases:
+1. Handshake:
+  * Bob establishes TCP connection to Alice
+  * Authenticates Alice via CA signed certificate
+  * Creates, encrypts (using Alice’s public key), sends master secret key to Alice
+2. Key Derivation:
+  * Alice, Bob use shared secret (MS) to generate 4 keys:
+    * E<sub>B</sub>: Bob->Alice data encryption key
+    * E<sub>A</sub>: Alice->Bob data encryption key
+    * M<sub>B</sub>: Bob->Alice MAC key
+    * M<sub>A</sub>: Alice->Bob MAC key
+3. Data Transfer
+  1. Uses MAC key to create digital signature and then appends to the payload.
+  2. Uses encryption key to encrypt both signature and data
+
+**SSL** record format:
+![SSL](http://www.sr2jr.com/ckimages/1468049122_1.JPG)
+
+### 8.7 IPsec: Network Layer Security
+
+Network-layer secrecy:
+* Sending host encrypts the data in IP datagram
+* TCP and UDP segments; ICMP and SNMP messages.
+
+Network-layer authentication:
+* destination host can authenticate source IP address
+
+Two principal protocols:
+* Authentication header (AH) protocol
+* Encapsulation security payload (ESP) protocol
+
+For both AH and ESP, source, destination handshake:
+* Create network-layer logical channel called a security association (SA)
+
+Each SA unidirectional.
+
+Uniquely determined by:
+* Security protocol (AH or ESP)
+* Source IP address
+* 32-bit connection ID
+
+#### 8.7.1 Authentication Header (AH) Protocol
+
+AH protocol provides source authentication, data integrity but does not provide confidentiality
+
+The AH header is inserted between IP header, data field.
+
+![AH header](http://userpages.umbc.edu/~dgorin1/451/security/dcomm/IPsec_files/AH.jpg)
+
+AH header includes:
+* Connection identifier
+* Authentication data: source- signed message digest calculated over original IP datagram.
+* Next header field: specifies type of data (e.g., TCP, UDP, ICMP)
+
+#### 8.7.2 ESP Protocol
+
+Provides secrecy, host authentication, data integrity.
+ESP authentication field is similar to AH authentication field
+
+![ESP header](http://wiki.mikrotik.com/images/c/cb/Image9010.gif)
