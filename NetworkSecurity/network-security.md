@@ -69,8 +69,6 @@ Attacks:
  * **Modification of message**: some portion of a legitimate message is altered, or that messages are delayed or reordered.
  * **The denial of service**: prevents or inhibits the normal use or management of communications facilities
 
-![alt tag]()
-
 * **Interruption**: This is an attack on availability
 * **Interception**: This is an attack on confidentiality
 * **Modification**: This is an attack on integrity
@@ -168,9 +166,9 @@ Three indepentdent dimemsions of cryptography:
 * **Unconditional security**:  no matter how much computer power or time is available, the cipher cannot be broken since the ciphertext provides insufficient information to uniquely determine the corresponding plaintext.
 * **Computational security**: given limited computing resources (eg time needed for calculations is greater than age of universe), the cipher cannot be broken.
 
-1. **Brute-force attack**: Eve has caught a ciphertext and will try every
+* **Brute-force attack**: Eve has caught a ciphertext and will try every
  * Possible key to try to decrypt it. This can be made infinitely hard by choosing a large keyspace.
-2. **Cryptanalytic attacks**
+* **Cryptanalytic attacks**
  * **Cyphertext-only attack**: Eve can gather and analyze C’s to learn K2
   * Encryption algorithm is known
   * Ciphertext to be decoded is known
@@ -191,7 +189,7 @@ Three indepentdent dimemsions of cryptography:
   * Ciphertext to be decoded is known
   * Plaintext message chosen by cryptanalyst, together with its corresponding ciphertext generated with the secret key
   * Purported ciphertext chosen by cryptanalyst, together with its corresponding decrypted plaintext generated with the secret key
-3. **Man-in-the-middle attack**:
+* **Man-in-the-middle attack**:
  * Mallory can modify messages
  * So that they have different meaning – Mallory can drop messages
  * Mallory can replay messages to Alice, Bob or the third party
@@ -275,9 +273,10 @@ Ciphertext: EVLNE ACDTK ESEAQ ROFOJ DEECU WIREE
 ### 2.2 Symmetric Block Encryption Algorithm
 
 **Diffusion**: dissipates statistical structure of plaintext over bulk of ciphertext.
+
 **Confusion**: makes relationship between ciphertext and key as complex as possible.
 
-#### Feistel Cipher Structure
+#### 2.2.1 Feistel Cipher Structure
 
 ![alt tag](http://images.slideplayer.com/9/2613295/slides/slide_13.jpg)
 
@@ -299,9 +298,9 @@ Other considerations:
 * Fast software en/decryption
 * Ease of analysis
 
-#### Data Encryption Standard
+#### 2.2.2 Data Encryption Standard
 
-**Data Encryption Standard***:
+**Data Encryption Standard**:
 
 * Used 64-bit data blocks
 * 56-bit key, but only subkey is only 48 bits since 8 bits are for bit check function.
@@ -333,7 +332,7 @@ Single round structure of DES:
 1. The output changes significantly (e.g., half the output bits flip) as a result of a slight change in input (e.g., flipping a single bit)
 2. In "quality" block ciphers, such a small change in either the key or the plaintext should cause a strong change in the ciphertext.
 
-#### Double-DES
+#### 2.2.3 Double-DES
 
 Use 2 DES encrypts on each block: C = E<sub>K2</sub>(E<sub>K1</sub>(P))
 
@@ -343,7 +342,7 @@ Since X = E<sub>K1</sub>(P) = D<sub>K2</sub>(C), hackers can attack by encryptin
 
 Only takes twice as long to break double DES using brute force => 2<sup>57</sup>
 
-#### Triple-DES with Two-Keys
+#### 2.2.4 Triple-DES
 
 **Triple-DES with Two-Keys** uses 3 encryptions and 2 keys in sequence  E-D-E.
 
@@ -357,15 +356,13 @@ Similar to **Triple-DES with Two-Keys** but uses 3 keys
 
 C = E<sub>k3</sub>(D<sub>k2</sub>(E<sub>k1</sub>(P)))
 
-#### Advanced Encryption Standard (AES)
+#### 2.2.5 Advanced Encryption Standard (AES)
 
 **AES** properties:
 
 * Secret key symmetric block cipher.
 * 128-bit data, 128/192/256-bit keys.
 * Stronger & faster than Triple-DES.
-
-![alt tag](fillin)
 
 ![alt tag](https://www.kullabs.com/uploads/AES_structure.png)
 
@@ -382,7 +379,7 @@ C = E<sub>k3</sub>(D<sub>k2</sub>(E<sub>k1</sub>(P)))
  * Add round key (XOR state with key material).
 * Last round only has 3 stages.
 
-#### Other Symmetric Block Ciphers
+#### 2.2.6 Other Symmetric Block Ciphers
 
 **International Data Encryption Algorithm**
 
@@ -413,13 +410,13 @@ Stream cipher properties:
 * Statistically random.
 * Depends on large enough key.
 
-#### RC4
+#### 2.4.1 RC4
 
 ![alt tag](http://flylib.com/books/3/190/1/html/2/images/06fig09.jpg)
 
 **RC4** outline:
 
-1. Initial State of **S**(state vector, initialized from key) and **T** (temporary vector)
+1/ Initial State of **S**(state vector, initialized from key) and **T** (temporary vector)
 
  * **S**: a permutation of 8-bit numbers from 0 to 255.
 ```
@@ -429,7 +426,7 @@ for i = 0 to 255 do
  T[i] = K[i mod keylen])
 ```
 
-2. Initial permutation of S
+2/ Initial permutation of S
 
 ```
 j = 0
@@ -438,7 +435,7 @@ for i = 0 to 255 do
  swap (S[i], S[j])
 ```
 
-3. Stream generation
+3/ Stream generation
 
 ```
 /*stream generation */
@@ -1080,6 +1077,7 @@ Uses symmetric key cryptography, public key cryptography, hash function, and dig
 Provides transport layer security to any TCP-based application using SSL services. 
 
 SSL consists of three phases:
+
 1. Handshake:
   * Bob establishes TCP connection to Alice
   * Authenticates Alice via CA signed certificate
