@@ -1101,12 +1101,15 @@ Network-layer secrecy:
 * Sending host encrypts the data in IP datagram
 * TCP and UDP segments; ICMP and SNMP messages.
 
+
 Network-layer authentication:
 * destination host can authenticate source IP address
+
 
 Two principal protocols:
 * Authentication header (AH) protocol
 * Encapsulation security payload (ESP) protocol
+
 
 For both AH and ESP, source, destination handshake:
 * Create network-layer logical channel called a security association (SA)
