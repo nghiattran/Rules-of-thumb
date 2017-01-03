@@ -1,4 +1,6 @@
-# Given an array nums containing n + 1 integers where each integer is between 1 and n (inclusive), prove that at least one duplicate number must exist. Assume that there is only one duplicate number, find the duplicate one.
+# Given an array nums containing n + 1 integers where each integer is between 1 and n 
+# (inclusive), prove that at least one duplicate number must exist. Assume that there 
+# is only one duplicate number, find the duplicate one.
 
 # Note:
 # You must not modify the array (assume the array is read only).
@@ -7,7 +9,8 @@
 # There is only one duplicate number in the array, but it could be repeated more than once.
 
 
-# NOTE: the solution below does not account for self cycle which mean 2 identical values next to each other. Example: 1, 2, 3, 3, 4
+# NOTE: the solution below does not account for self cycle which mean 2 identical values 
+# next to each other. Example: 1, 2, 3, 3, 4
 def findDuplicate(self, nums):
     fast = 0
     slow = 0

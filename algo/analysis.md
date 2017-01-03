@@ -184,6 +184,7 @@ By change base to n, all number in the given array would consist of 1 or 2 bits.
 
 TODO: come back to this one
 
+```
 #include<iostream>
 #include<climits>
 using namespace std;
@@ -248,3 +249,4 @@ int main()
     cout << "K'th smallest element is " << kthSmallest(arr, 0, n-1, k);
     return 0;
 }
+```

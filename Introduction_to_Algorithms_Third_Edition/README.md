@@ -163,3 +163,6 @@ The first level is hashing with chaining. Instead of using linked list for chain
 
 To guarantee there are collisions at the second level, size of S<sub>j</sub> needs to be the  squared of n<sub>j</sub>, number of keys hashing to slot `j`. This excessive storage at the second level can be made up by limiting the size of the first level which results O(n) space overall.
 
+## Chapter 13: Red-Black Trees
+
+
