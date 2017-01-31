@@ -24,7 +24,7 @@ Hyperparameters in convolution layer:
 * p<sub>j</sub>: zero padding (number of zeros concatenated at the beginning and at the end of an axis) along axis `j`.
 
 Example of 3x3 kernel, stride 2, padding 1 convolution on 2D *input feature map*:
-[Convolution layer](p1-convolution.png "Convolution layer")
+![Convolution layer](p1-convolution.png "Convolution layer")
 
 ### 1.2 Pooling
 
@@ -38,7 +38,7 @@ Hyperparameters in pooling layer:
 In some sense, pooling works very much like a discrete convolution, but replaces the linear combination described by the kernel with some other function.
 
 Example of max pooling:
-[Max pooling](max-pooling.png "Max pooling")
+![Max pooling](max-pooling.png "Max pooling")
 
 ## Chapter 2 + 3: Convolution and pooling arithmetic
 
@@ -55,10 +55,12 @@ Transposed convolution is the opposite of convolution.
 
 ### 4.1 Convolution as a matrix operation
 
-[Convolution](convolution.png "Convolution")
+![Convolution](convolution.png "Convolution")
 
 As a result of convolution, we have o<sub>0,0</sub> as:
 
+|  |  |  |  |
+|---------------|---|---|---|
 | w<sub>0,1 </sub> | w<sub>0,1 </sub> | w<sub>0,2 </sub> | 0 |
 | w<sub>1,1 </sub> | w<sub>1,1 </sub> | w<sub>1,2 </sub> | 0 |
 | w<sub>2,1 </sub> | w<sub>2,1 </sub> | w<sub>2,2 </sub> | 0 |
@@ -67,7 +69,7 @@ As a result of convolution, we have o<sub>0,0</sub> as:
 Take example of the above convolution representation. If the input and output were to be unrolled into vectors from left to right, top to bottom, the convolution could be represented as a sparse matrix **C** where the non-zero elements are the elements wi,j of the kernel (with `i` and `j` being the row and column of the kernel respectively):
 
 Note that each row of **C** is unrolled from earlier matrix.
-[Unrolled Convolution](unrolled_convolution.png "Unrolled Convolution")
+![Unrolled Convolution](unrolled_convolution.png "Unrolled Convolution")
 
 So the convolution can be described in linear algebra form as: 
 * Flatten input matrix to produce a 16-dimensional vector (orginally 4x4) denote **I**.
