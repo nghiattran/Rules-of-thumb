@@ -62,7 +62,7 @@ As a result of convolution, we have o<sub>0,0</sub> as:
 |  |  |  |  |
 |---------------|---|---|---|
 | w<sub>0,1 </sub> | w<sub>0,1 </sub> | w<sub>0,2 </sub> | 0 |
-| w<sub>1,1 </sub> | w<sub>1,1 </sub> | w<sub>1,2 </sub> | 0 |
+| w<sub>1,1 </sub> | w<sub>1,1 <  /sub> | w<sub>1,2 </sub> | 0 |
 | w<sub>2,1 </sub> | w<sub>2,1 </sub> | w<sub>2,2 </sub> | 0 |
 | 0 | 0 | 0 | 0 |
 
@@ -78,7 +78,7 @@ produce a 4-dimensional vector (4, 1) that is later reshaped as the 2 × 2 outpu
 
 Using this representation, the backward pass is easily obtained by transposing **C** as multiplying the loss with **C**<sub>T</sub> using 4-dimensional vector as input to produce a 16-dimensional output vector.
 
-** 4.2 Transposed convolution
+### 4.2 Transposed convolution
 
 **Transposed convolution** (fractionally strided convolutions): maping from a 4-dimensional space to a 16-dimensional space.
 
