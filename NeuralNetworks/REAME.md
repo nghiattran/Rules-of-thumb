@@ -85,9 +85,34 @@ So the hidden layer is computed as:
 
 One problem with vanilla neural nets and convolution neural nets is that they are fixed in term of input size, output size, and computational steps. For these types of network, for each input, a network will only produce one output which is undesirable in many fields such as Naural Language Processing (NPL). In NLP, one input usually requires multiple output values. For example, consider a word is a one hot N-dimensional vecor where N is the number of unique word in the entire dictionary.
 
+
+
 ## 3. Long Short Term Memorys (LSTMs)
 
 TODO
+
+## 4 Update functions
+
+### 4.1 Gradient descent
+
+<strong>v = - learning_rate * d<sub>x</sub></strong>
+
+### 4.2 Momentum update
+
+Momentum kind of shoots ahead by using big update steps. Sometimes it overshoots and overall much better than vanila GD 
+
+<strong>v = mu * v - learning_rate * d<sub>x</sub></strong>
+
+### 4.3 Nesterov Momentum update (Nesterov Accelerated Gradient, nag)
+
+<strong>v_prev = v</strong>
+<strong>v = mu * v - learning_rate * d<sub>x</sub></strong>
+<strong>v = -mu * v_prev + (1 + mu) * v</strong>
+
+### 4.4 AdaGrad update
+
+<strong>cache += d<sub>x</sub></strong>
+<strong>v = mu * v - learning_rate * d<sub>x</sub></strong>
 
 [word2vec Parameter Learning Explained](http://www-personal.umich.edu/~ronxin/pdf/w2vexp.pdf)
 
