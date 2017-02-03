@@ -6,8 +6,6 @@
 
 In a sense, Word2Vec tries to map human words to a vector space in which related or requently used words are located near to each other. A group of nearby or related words can be called a **Bag of Words**.
 
-TODO: come back and check **bag-of-word** (CBOW) vs **skip-gram** (SG) models
-
 #### Word2Vec features
 
 TODO: This section is personal perception
@@ -85,35 +83,120 @@ So the hidden layer is computed as:
 
 One problem with vanilla neural nets and convolution neural nets is that they are fixed in term of input size, output size, and computational steps. For these types of network, for each input, a network will only produce one output which is undesirable in many fields such as Naural Language Processing (NPL). In NLP, one input usually requires multiple output values. For example, consider a word is a one hot N-dimensional vecor where N is the number of unique word in the entire dictionary.
 
-
+TODO
 
 ## 3. Long Short Term Memorys (LSTMs)
 
-TODO
+## 4 Learning and Evaluation
 
-## 4 Update functions
+### 4.1 Update functions
 
-### 4.1 Gradient descent
+#### 4.1.1 Gradient descent
 
 <strong>v = - learning_rate * d<sub>x</sub></strong>
 
-### 4.2 Momentum update
+#### 4.1.2 Momentum update
 
-Momentum kind of shoots ahead by using big update steps. Sometimes it overshoots and overall much better than vanila GD 
+The idea of momentum is based on previous gradient changes. For example, if the gradients have been going toward a certain direction (e.g same sign) for several time steps, it knows that the about-to-compute probably to go in that direction. So this method saves time by adding momentum for it so that gradients move faster toward convergence point.  
+
+Because of the feature above momentum update usually overshoots but overall much better than vanila GD 
 
 <strong>v = mu * v - learning_rate * d<sub>x</sub></strong>
+<strong>x += v</strong>
 
-### 4.3 Nesterov Momentum update (Nesterov Accelerated Gradient, nag)
+Where:
+* `v`: gradient update (gradients velocity). 
+* `mu`: momentum value, from 0 to 1, hyperparameter. Common values: 0.5, 0.9, 0.95, 0.99 but normally 0.9
+
+> With Momentum update, the parameter vector will build up velocity in any direction that has consistent gradient.
+
+#### 4.1.3 Nesterov Accelerated Gradient (nag)
+
+This is an advanced version of Momentum. As explained before, the momentum sort of predicts where gradients are heading and adds some value to help they move faster. **nag** takes the same idea but it computes gradients at the predicted state instead of the current state.
+
+<strong>
+x<sub>ahead</sub> = x + mu * v
+
+v = mu * v - learning_rate * d<sub>x<sub>ahead</sub></sub>
+
+x += v
+</strong>
 
 <strong>v_prev = v</strong>
-<strong>v = mu * v - learning_rate * d<sub>x</sub></strong>
-<strong>v = -mu * v_prev + (1 + mu) * v</strong>
 
-### 4.4 AdaGrad update
-
-<strong>cache += d<sub>x</sub></strong>
 <strong>v = mu * v - learning_rate * d<sub>x</sub></strong>
+
+<strong>x = -mu * v_prev + (1 + mu) * v</strong>
+
+![Vanila momentum vs Nesterov](nesterov.jpeg)
+
+Vanila momentum computes gradients at current state (red dot) vs Nesterov computes at predicted state (the point at the end of green arrow)
+
+In all methods above, learning rate is independent from the the network result and changes periodicaly with the same amount which require tuning learning rate. Many methods these days try to solve this problem by introducing result-driven learning rate. 
+
+#### 4.1.4 AdaGrad update
+
+AdaGrad ([Adaptative Gradient](http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf)): an adaptive learning rate method.
+
+<strong>cache += d<sub>x</sub><sup>2</sup></strong>
+
+<strong>x += -learning_rate * d<sub>x</sub> / sqrt(cache)</strong>
+
+Notice that the weights that receive high gradients will have their effective learning rate reduced, while weights that receive small or infrequent updates will have their effective learning rate increased.
+
+The main drawback of this method is that `cache` increases too aggressive, hence, the network stops learning too early.
+
+#### 4.1.5 RMSprop
+
+To utilize AdaGrad, Geoff Hinton proposed a method that effectively reduce AdaGrad's aggressiveness.
+
+<strong>cache += decay_rate * cache + (1 - decay_rate) * d<sub>x</sub><sup>2</sup></strong>
+
+<strong>x += -learning_rate * d<sub>x</sub> / sqrt(cache)</strong>
+
+`decay_rate`: hyperparameter, typical values: 0.9, 0.99, 0.999
+
+#### 4.1.6 Adam (Adadelta)
+
+RMSProp with momentum. Another thing is that instead of using d<sub>x</sub> for the final update, `Adadelta` sort of smoothens the gradients by applying adaptative gradient
+
+<strong>
+m = beta1*m + (1-beta1)*d<sub>x</sub>
+
+v = beta2*v + (1-beta2)*(d<sub>x</sub>**2)
+
+x += - learning_rate * m / (np.sqrt(v) + eps)
+</strong>
+
+### 4.2 Annealing the learning rate 
+
+Note: this section is taken directly from [cs231-neural networks 3](http://cs231n.github.io/neural-networks-3/)
+
+In training deep networks, it is usually helpful to anneal the learning rate over time. Good intuition to have in mind is that with a high learning rate, the system contains too much kinetic energy and the parameter vector bounces around chaotically, unable to settle down into deeper, but narrower parts of the loss function. Knowing when to decay the learning rate can be tricky: Decay it slowly and you’ll be wasting computation bouncing around chaotically with little improvement for a long time. But decay it too aggressively and the system will cool too quickly, unable to reach the best position it can. There are three common types of implementing the learning rate decay:
+
+* **Step decay**: Reduce the learning rate by some factor every few epochs. Typical values might be reducing the learning rate by a half every 5 epochs, or by 0.1 every 20 epochs. These numbers depend heavily on the type of problem and the model. One heuristic you may see in practice is to watch the validation error while training with a fixed learning rate, and reduce the learning rate by a constant (e.g. 0.5) whenever the validation error stops improving.
+* **Exponential decay**: has the mathematical form <strong>α=α<sub>0</sub>e<sup>−kt</sup></strong>, where <strong>α<sub>0</sub>,k</strong> are hyperparameters and tt is the iteration number (but you can also use units of epochs).
+* **1/t**: decay has the mathematical form <strong>α=α0/(1+kt)α=α0/(1+kt)</strong> where a0,ka0,k are hyperparameters and tt is the iteration number.
+
+In practice, we find that the step decay dropout is slightly preferable because the hyperparameters it involves (the fraction of decay and the step timings in units of epochs) are more interpretable than the hyperparameter kk. Lastly, if you can afford the computational budget, err on the side of slower decay and train for a longer time.
+
+
+## Appendix A: Common terminologies
+
+**ϴ**:
+
+**μ** (Mu): Momentum value
+
+**v**: Gradient update
+
+**ϵ** (Epsilon):
+
+**ϕ**: Updated weights
+
+## References
 
 [word2vec Parameter Learning Explained](http://www-personal.umich.edu/~ronxin/pdf/w2vexp.pdf)
 
 [The Unreasonable Effectiveness of Recurrent Neural Networks](http://karpathy.github.io/2015/05/21/rnn-effectiveness/)
+
+[Adam](https://arxiv.org/pdf/1412.6980v9.pdf)
