@@ -81,11 +81,24 @@ So the hidden layer is computed as:
 
 ## 2. Recurrent Neural Networks (RNNs)
 
-One problem with vanilla neural nets and convolution neural nets is that they are fixed in term of input size, output size, and computational steps. For these types of network, for each input, a network will only produce one output which is undesirable in many fields such as Naural Language Processing (NPL). In NLP, one input usually requires multiple output values. For example, consider a word is a one hot N-dimensional vecor where N is the number of unique word in the entire dictionary.
+One problem with vanilla neural nets and convolution neural nets is that they are fixed in term of input size, output size, and computational steps. For these types of network, for each input, a network will only produce one output which is undesirable in many fields such as Neural Language Processing (NPL). In NLP, one input usually produces multiple outputs. 
 
-TODO
+RNNs tackle this problem by using it previous states to calculate current state. Think of it as human reading. When we read, we do not process words individually. Instead, we make connections between those come before a certain word to determine what that word means in the given context. For example, if you are given a string "the president of the United States of ______" and asked to fill in the blank, chances are most people will guess the missing word in "America" because all words come before it give us a pretty good hint. That is exactly what a RNN does, it look at previous words to process the next one.
+
+So, RNN step computation can be written as:
+
+![RNN](RNN_concept.png)
+
+In detail, the function looks like this:  
+
+<strong>h<sub>t</sub> = tanh(W<sub>h,h</sub>h<sub>t-1</sub> + W<sub>x,h</sub>x<sub>t</sub>)</strong>
+
+At start, you can set h<sub>0</sub> = 0.
+
 
 ## 3. Long Short Term Memorys (LSTMs)
+
+TODO
 
 ## 4 Learning and Evaluation
 
@@ -180,6 +193,7 @@ In training deep networks, it is usually helpful to anneal the learning rate ove
 
 In practice, we find that the step decay dropout is slightly preferable because the hyperparameters it involves (the fraction of decay and the step timings in units of epochs) are more interpretable than the hyperparameter kk. Lastly, if you can afford the computational budget, err on the side of slower decay and train for a longer time.
 
+### 
 
 ## Appendix A: Common terminologies
 
